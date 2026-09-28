@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
 import { Alert, Button, Field, linkClasses } from "@/components/ui";
 import { Link, useRouter } from "@/i18n/navigation";
@@ -32,17 +32,22 @@ function afterAuth(kind: string | undefined, router: ReturnType<typeof useRouter
   router.replace(kind === "PICKER" ? "/businesses" : "/dashboard");
 }
 
-export function LoginForm() {
+/** `initialError`: the code a plain form post came back with (see `@/lib/form-post`). */
+export function LoginForm({ initialError }: { initialError?: string }) {
   const t = useTranslations("login");
   const guide = useTranslations("guide");
   const errors = useTranslations("errors");
+  const locale = useLocale();
   const router = useRouter();
+  const message = (code: string) => (errors.has(code) ? errors(code) : errors("unknown"));
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState(() => (initialError ? message(initialError) : undefined));
 
   return (
     <form
+      action="/api/auth/login"
       className="flex flex-col gap-6"
+      method="post"
       onSubmit={async (event) => {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
@@ -56,12 +61,13 @@ export function LoginForm() {
           afterAuth(payload.kind, router);
         } catch (caught) {
           const code = caught instanceof Error ? caught.message : "unknown";
-          setError(errors.has(code) ? errors(code) : errors("unknown"));
+          setError(message(code));
         } finally {
           setPending(false);
         }
       }}
     >
+      <input name="locale" type="hidden" value={locale} />
       <h1 className="text-2xl font-bold tracking-tight text-ink">{t("title")}</h1>
       <div className="flex flex-col gap-4">
         <Field autoComplete="tel" hint={t("phoneHint")} label={t("phone")} name="phone" required type="tel" />
@@ -85,16 +91,20 @@ export function LoginForm() {
   );
 }
 
-export function SignupForm() {
+export function SignupForm({ initialError }: { initialError?: string }) {
   const t = useTranslations("signup");
   const errors = useTranslations("errors");
+  const locale = useLocale();
   const router = useRouter();
+  const message = (code: string) => (errors.has(code) ? errors(code) : errors("unknown"));
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState<string>();
+  const [error, setError] = useState(() => (initialError ? message(initialError) : undefined));
 
   return (
     <form
+      action="/api/auth/signup"
       className="flex flex-col gap-6"
+      method="post"
       onSubmit={async (event) => {
         event.preventDefault();
         const form = new FormData(event.currentTarget);
@@ -111,12 +121,13 @@ export function SignupForm() {
           afterAuth(payload.kind, router);
         } catch (caught) {
           const code = caught instanceof Error ? caught.message : "unknown";
-          setError(errors.has(code) ? errors(code) : errors("unknown"));
+          setError(message(code));
         } finally {
           setPending(false);
         }
       }}
     >
+      <input name="locale" type="hidden" value={locale} />
       <h1 className="text-2xl font-bold tracking-tight text-ink">{t("title")}</h1>
       <div className="flex flex-col gap-4">
         <Field autoComplete="name" label={t("fullName")} name="fullName" required />
