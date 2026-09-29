@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "openapi": "openapi-typescript openapi/backend.json -o src/lib/api/schema.ts"
+    "openapi": "openapi-typescript openapi/backend.json -o src/lib/api/schema.ts",
+    "check:browsers": "node scripts/check-old-browsers.mjs",
+    "test:e2e": "node scripts/check-old-browsers.mjs && playwright test"
   },
   "dependencies": {
     "decimal.js": "^10.6.0",
@@ -18,15 +20,26 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "acorn": "^8.18.0",
+    "acorn-walk": "^8.3.5",
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "openapi-typescript": "^7.13.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "packageManager": "pnpm@12.5.1"
+  "packageManager": "pnpm@12.5.1",
+  "browserslist": [
+    "chrome >= 90",
+    "edge >= 90",
+    "firefox >= 90",
+    "safari >= 15",
+    "ios_saf >= 15",
+    "samsung >= 15"
+  ]
 }

@@ -48,7 +48,9 @@ function maxAge(iso: string | undefined, fallback: number) {
 function cookieOptions(maxAgeSeconds: number) {
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    // https-only in production; TRILLOPOS_COOKIE_SECURE=false only for the end-to-end tests, which
+    // run the production build over plain http://localhost (WebKit refuses secure cookies there)
+    secure: process.env.NODE_ENV === "production" && process.env.TRILLOPOS_COOKIE_SECURE !== "false",
     sameSite: "lax" as const,
     path: "/",
     maxAge: maxAgeSeconds,

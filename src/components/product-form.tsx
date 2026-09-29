@@ -16,6 +16,7 @@ type Location = Schemas["LocationView"];
 export function ProductForm({ productId }: { productId?: string }) {
   const t = useTranslations("productForm");
   const errors = useTranslations("errors");
+  const common = useTranslations("common");
   const codes = useCodes();
   const router = useRouter();
   const editing = Boolean(productId);
@@ -42,6 +43,7 @@ export function ProductForm({ productId }: { productId?: string }) {
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
   // editing: the form waits for the product instead of flashing empty fields
   const [loaded, setLoaded] = useState(!productId);
 
@@ -62,7 +64,7 @@ export function ProductForm({ productId }: { productId?: string }) {
       if (first?.id) {
         setLocationId(first.id);
       }
-    });
+    }).catch(() => setLoadFailed(true));
     if (!productId) {
       return;
     }
@@ -89,8 +91,16 @@ export function ProductForm({ productId }: { productId?: string }) {
   const profit = profitPerUnit(retailPrice, openingCost);
 
   async function save() {
-    setPending(true);
     setError(undefined);
+    if (!name.trim()) {
+      setError(t("nameRequired"));
+      return;
+    }
+    if (!editing && openingQty && !locationId) {
+      setError(t("locationRequired"));
+      return;
+    }
+    setPending(true);
     const body = {
       name,
       sku: sku || undefined,
@@ -107,7 +117,7 @@ export function ProductForm({ productId }: { productId?: string }) {
       active,
       barcodes: barcode ? [barcode] : undefined,
       openingStock:
-        !editing && openingQty && locationId
+        !editing && openingQty
           ? [{ locationId, quantity: openingQty, unitCost: openingCost || undefined }]
           : undefined,
     } as Schemas["ProductWrite"];
@@ -143,6 +153,14 @@ export function ProductForm({ productId }: { productId?: string }) {
   return (
     <Page width="narrow">
       <PageHeader title={editing ? t("editTitle") : t("addTitle")} subtitle={t("subtitle")} />
+      {loadFailed ? (
+        <div className="flex flex-col gap-2">
+          <Alert>{t("loadFailed")}</Alert>
+          <Button className="self-start" onClick={() => window.location.reload()} type="button" variant="secondary">
+            {common("retry")}
+          </Button>
+        </div>
+      ) : null}
       <Panel title={t("basics")}>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field className="sm:col-span-2" label={t("name")} onChange={(event) => setName(event.target.value)} required value={name} />
@@ -236,7 +254,7 @@ export function ProductForm({ productId }: { productId?: string }) {
         <Button onClick={() => router.push(editing ? `/products/${productId}` : "/products")} type="button" variant="secondary">
           {t("cancel")}
         </Button>
-        <Button busy={pending} disabled={!name || archiving} onClick={() => void save()} type="button">
+        <Button busy={pending} disabled={archiving} onClick={() => void save()} type="button">
           {pending ? t("saving") : t("save")}
         </Button>
       </div>

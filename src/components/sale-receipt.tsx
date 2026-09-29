@@ -146,7 +146,7 @@ export function SaleReceipt({ saleId }: { saleId: string }) {
           idempotencyKey: key,
         }),
       });
-      setNotice(result.replayed ? t("replayed") : result.data.returnNumber ?? t("returned"));
+      setNotice(result.replayed ? t("replayed") : [t("returned"), result.data.returnNumber].filter(Boolean).join(" · "));
       setKey(crypto.randomUUID());
       setSale(await readJson<Schemas["SaleView"]>(`/api/sales/${saleId}`));
     } catch (caught) {
@@ -168,6 +168,8 @@ export function SaleReceipt({ saleId }: { saleId: string }) {
         }
         title={sale.receiptNumber ?? t("parked")}
       />
+      {/* above the receipt: a return of everything closes the Return form it came from */}
+      {notice ? <Alert tone="success">{notice}</Alert> : null}
 
       <Panel>
         <div className="flex flex-col gap-6">
@@ -301,7 +303,6 @@ export function SaleReceipt({ saleId }: { saleId: string }) {
             <Field label={t("reason")} onChange={(event) => setReason(event.target.value)} value={reason} />
             <Field label={t("reference")} onChange={(event) => setReference(event.target.value)} value={reference} />
             {error ? <Alert>{error}</Alert> : null}
-            {notice ? <Alert tone="success">{notice}</Alert> : null}
             <Button busy={busy === "return"} className="self-start" type="submit" variant="secondary">{t("submitReturn")}</Button>
           </form>
         </Panel>
