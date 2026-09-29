@@ -62,6 +62,7 @@ export function ProductDetail({ productId }: { productId: string }) {
           <span className="flex flex-wrap items-center gap-2">
             {product.active === false ? <Badge tone="muted">{t("inactive")}</Badge> : null}
             <span>{[product.sku, product.barcodes?.[0], category].filter(Boolean).join(" · ")}</span>
+            {product.sizeEquivalents ? <span className="basis-full">{t("sameSize", { sizes: product.sizeEquivalents })}</span> : null}
           </span>
         }
         title={product.name ?? ""}

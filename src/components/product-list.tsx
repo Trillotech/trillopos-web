@@ -24,6 +24,7 @@ import { Link } from "@/i18n/navigation";
 import type { Schemas } from "@/lib/backend";
 import { addQuantities, formatAmount, weightedAverageCost } from "@/lib/money";
 import { messageFor, readJson } from "@/lib/read-json";
+import { matchesWords } from "@/lib/search";
 
 type Product = Schemas["ProductView"];
 type Category = Schemas["CategoryView"];
@@ -100,7 +101,7 @@ export function ProductList() {
         return true;
       }
       const category = categories.find((row) => row.id === product.categoryId)?.name ?? "";
-      return [product.name, product.sku, product.barcodes?.join(" "), category].join(" ").toLowerCase().includes(needle);
+      return matchesWords(needle, product.name, product.sku, product.barcodes?.join(" "), category, product.sizeEquivalents);
     });
   }, [products, balances, categories, query, categoryId, stock]);
 
@@ -173,7 +174,8 @@ export function ProductList() {
                     href={`/products/${product.id}`}
                   >
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold text-ink">{product.name}</span>
+                      <span className="line-clamp-2 font-semibold break-words text-ink">{product.name}</span>
+                      {product.sizeEquivalents ? <span className="block truncate text-xs text-slate">{product.sizeEquivalents}</span> : null}
                       <span className="block truncate text-xs text-slate">
                         {[product.sku, category, product.trackInventory ? `${t("stock")} ${quantity}` : null].filter(Boolean).join(" · ")}
                       </span>
@@ -227,6 +229,7 @@ export function ProductList() {
                         >
                           {product.name}
                         </Link>
+                        {product.sizeEquivalents ? <span className="block text-xs text-slate">{product.sizeEquivalents}</span> : null}
                       </td>
                       <td className="px-4 py-4 font-mono text-xs whitespace-nowrap text-slate">{product.sku}</td>
                       <td className="hidden px-4 py-4 font-mono text-xs whitespace-nowrap text-slate 2xl:table-cell">{product.barcodes?.[0] ?? "—"}</td>

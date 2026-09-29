@@ -1350,20 +1350,20 @@ export interface components {
         SizeChartCreate: {
             templateKey?: string;
             name?: string;
-            shortName?: string;
             /** @enum {string} */
             kind?: "FOOTWEAR" | "CLOTHING" | "OTHER";
-            labels?: string[];
+            systems?: string[];
+            rows?: string[][];
         };
         SizeChartView: {
             /** Format: uuid */
             id?: string;
             name?: string;
-            shortName?: string;
             /** @enum {string} */
             kind?: "FOOTWEAR" | "CLOTHING" | "OTHER";
             templateKey?: string;
-            labels?: string[];
+            systems?: string[];
+            rows?: string[][];
         };
         OpenRequest: {
             /** Format: uuid */
@@ -1598,6 +1598,7 @@ export interface components {
             active?: boolean;
             barcodes?: string[];
             openingStock?: components["schemas"]["OpeningStockWrite"][];
+            sizeEquivalents?: string;
         };
         ProductView: {
             /** Format: uuid */
@@ -1611,6 +1612,7 @@ export interface components {
             /** @enum {string} */
             unit?: "PIECE" | "BAG" | "BOX" | "KG" | "LITRE" | "PACK";
             sizeLabel?: string;
+            sizeEquivalents?: string;
             productGroupKey?: string;
             /** Format: uuid */
             sizeChartId?: string;
@@ -1931,10 +1933,10 @@ export interface components {
         };
         SizeChartUpdate: {
             name?: string;
-            shortName?: string;
             /** @enum {string} */
             kind?: "FOOTWEAR" | "CLOTHING" | "OTHER";
-            labels?: string[];
+            systems?: string[];
+            rows?: string[][];
         };
         OrganizationUpdate: {
             name?: string;
@@ -2039,8 +2041,8 @@ export interface components {
             /** @enum {string} */
             kind?: "FOOTWEAR" | "CLOTHING" | "OTHER";
             name?: string;
-            shortName?: string;
-            labels?: string[];
+            systems?: string[];
+            rows?: string[][];
         };
         Drawer: {
             openingFloat?: number;
