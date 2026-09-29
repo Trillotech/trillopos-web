@@ -3450,7 +3450,9 @@ export interface operations {
     };
     archive_1: {
         parameters: {
-            query?: never;
+            query?: {
+                writeOffStock?: boolean;
+            };
             header?: never;
             path: {
                 id: string;

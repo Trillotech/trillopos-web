@@ -14,7 +14,9 @@ export async function PATCH(request: Request, context: Context) {
   return relay((token) => api(token).PATCH("/products/{id}", { params: { path: { id } }, body }));
 }
 
-export async function DELETE(_request: Request, context: Context) {
+/** Deleting archives the product; `?writeOffStock=true` also writes off the stock it still holds. */
+export async function DELETE(request: Request, context: Context) {
   const { id } = await context.params;
-  return relay((token) => api(token).DELETE("/products/{id}", { params: { path: { id } } }));
+  const writeOffStock = new URL(request.url).searchParams.get("writeOffStock") === "true";
+  return relay((token) => api(token).DELETE("/products/{id}", { params: { path: { id }, query: { writeOffStock } } }));
 }

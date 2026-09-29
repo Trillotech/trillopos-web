@@ -38,3 +38,35 @@ test("changing a product's price", async ({ page, api }) => {
   await expect(page).toHaveURL(new RegExp(`/en/products/${product.id}$`));
   await expect(page.getByText("23,000").first()).toBeVisible();
 });
+
+test("deleting a product from the list: asks first, writes off its stock, and it leaves the list", async ({ page, api }) => {
+  const product = await addProduct(api, `E2E Nike ${Date.now()}`, 350000, 310000, 4);
+  await page.goto("/en/products");
+  await page.getByLabel("Search by name, SKU, or barcode").fill(product.name);
+  const bin = page.getByRole("button", { name: `Delete ${product.name}` }).filter({ visible: true });
+
+  // Cancel keeps it
+  await bin.click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByRole("heading", { name: `Delete ${product.name}?` })).toBeVisible();
+  await expect(dialog.getByText(/It still has 4 in stock/)).toBeVisible();
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.getByText(product.name).filter({ visible: true }).first()).toBeVisible();
+
+  // Yes, delete removes it
+  await bin.click();
+  await page.getByRole("dialog").getByRole("button", { name: "Yes, delete" }).click();
+  await expect(page.getByText(`${product.name} deleted.`)).toBeVisible();
+  await expect(page.getByText(product.name, { exact: true }).filter({ visible: true })).toHaveCount(0);
+  const balances = (await (await api.get("/api/catalog/balances")).json()) as { productId: string; quantity: number }[];
+  expect(balances.filter((row) => row.productId === product.id).every((row) => Number(row.quantity) === 0)).toBeTruthy();
+});
+
+test("deleting a product from its own page returns to the list with a message", async ({ page, api }) => {
+  const product = await addProduct(api, `E2E Converse ${Date.now()}`, 285000, 240000, 2);
+  await page.goto(`/en/products/${product.id}`);
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Yes, delete" }).click();
+  await expect(page).toHaveURL(/\/en\/products\?deleted=/);
+  await expect(page.getByText(`${product.name} deleted.`)).toBeVisible();
+});
