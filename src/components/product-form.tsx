@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
-import { Alert, Button, Checkbox, ConfirmButton, Field, Page, PageHeader, PageLoading, Panel, SelectField } from "@/components/ui";
+import { DeleteProduct } from "@/components/delete-product";
+import { Alert, Button, Checkbox, Field, Page, PageHeader, PageLoading, Panel, SelectField } from "@/components/ui";
 import { useRouter } from "@/i18n/navigation";
 import type { Schemas } from "@/lib/backend";
 import { useCodes } from "@/lib/codes";
 import { formatAmount, marginPercent, profitPerUnit } from "@/lib/money";
-import { messageFor, readJson } from "@/lib/read-json";
+import { readJson } from "@/lib/read-json";
 
 type Category = Schemas["CategoryView"];
 type Location = Schemas["LocationView"];
@@ -42,7 +43,6 @@ export function ProductForm({ productId }: { productId?: string }) {
   const [active, setActive] = useState(true);
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(false);
-  const [archiving, setArchiving] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   // editing: the form waits for the product instead of flashing empty fields
   const [loaded, setLoaded] = useState(!productId);
@@ -131,18 +131,6 @@ export function ProductForm({ productId }: { productId?: string }) {
       const code = caught instanceof Error ? caught.message : "unknown";
       setError(errors.has(code) ? errors(code) : errors("unknown"));
       setPending(false);
-    }
-  }
-
-  async function archive() {
-    setError(undefined);
-    setArchiving(true);
-    try {
-      await readJson(`/api/catalog/products/${productId}`, { method: "DELETE" });
-      router.push("/products");
-    } catch (caught) {
-      setError(messageFor(caught, errors, (code) => errors.has(code)));
-      setArchiving(false);
     }
   }
 
@@ -239,13 +227,7 @@ export function ProductForm({ productId }: { productId?: string }) {
       </Panel>
       {editing ? (
         <div>
-          <ConfirmButton
-            busy={archiving}
-            confirmLabel={t("archiveConfirm")}
-            label={t("archive")}
-            onConfirm={() => void archive()}
-            question={t("archiveQuestion")}
-          />
+          <DeleteProduct onDeleted={() => router.push(`/products?deleted=${encodeURIComponent(name)}`)} product={{ id: productId, name }} />
         </div>
       ) : null}
       {error ? <Alert>{error}</Alert> : null}
@@ -254,7 +236,7 @@ export function ProductForm({ productId }: { productId?: string }) {
         <Button onClick={() => router.push(editing ? `/products/${productId}` : "/products")} type="button" variant="secondary">
           {t("cancel")}
         </Button>
-        <Button busy={pending} disabled={archiving} onClick={() => void save()} type="button">
+        <Button busy={pending} onClick={() => void save()} type="button">
           {pending ? t("saving") : t("save")}
         </Button>
       </div>

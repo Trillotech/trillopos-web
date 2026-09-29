@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 
+import { DeleteProduct } from "@/components/delete-product";
 import { BoxIcon, PlusIcon } from "@/components/icons";
 import {
   Alert,
@@ -40,6 +42,15 @@ export function ProductList() {
   const [stock, setStock] = useState("active");
   const [error, setError] = useState<string>();
   const [loaded, setLoaded] = useState(false);
+  const deletion = useTranslations("productDelete");
+  // ?deleted=<name>: the product was deleted on its own page, which then came here
+  const deletedName = useSearchParams().get("deleted");
+  const [notice, setNotice] = useState(deletedName ? deletion("deleted", { name: deletedName }) : undefined);
+
+  function removed(product: Product) {
+    setProducts((current) => current.filter((row) => row.id !== product.id));
+    setNotice(deletion("deleted", { name: product.name ?? "" }));
+  }
 
   useEffect(() => {
     void Promise.all([
@@ -112,6 +123,7 @@ export function ProductList() {
         </SelectField>
       </div>
       {error ? <Alert>{error}</Alert> : null}
+      {notice ? <Alert tone="success">{notice}</Alert> : null}
       {!loaded ? (
         <LoadingRows rows={6} />
       ) : error ? null : products.length === 0 ? (
@@ -145,9 +157,9 @@ export function ProductList() {
               const quantity = addQuantities(stockRows.map((row) => row.quantity));
               const category = categories.find((row) => row.id === product.categoryId)?.name;
               return (
-                <li key={product.id}>
+                <li className="flex items-center" key={product.id}>
                   <Link
-                    className={`flex items-center gap-4 px-4 py-4 transition-colors hover:bg-slate-50 motion-reduce:transition-none ${insetFocusRing}`}
+                    className={`flex min-w-0 flex-1 items-center gap-4 py-4 pr-2 pl-4 transition-colors hover:bg-slate-50 motion-reduce:transition-none ${insetFocusRing}`}
                     href={`/products/${product.id}`}
                   >
                     <span className="min-w-0 flex-1">
@@ -163,6 +175,9 @@ export function ProductList() {
                       <StockBadge active={product.active} quantity={quantity} reorderPoint={product.reorderPoint} tracked={product.trackInventory} />
                     </span>
                   </Link>
+                  <span className="pr-2">
+                    <DeleteProduct compact onDeleted={() => removed(product)} product={product} />
+                  </span>
                 </li>
               );
             })}
@@ -182,6 +197,9 @@ export function ProductList() {
                   <th className="hidden px-4 py-4 text-right xl:table-cell" scope="col">{money(t("wholesale"))}</th>
                   <th className="px-4 py-4 text-right" scope="col">{t("stock")}</th>
                   <th className="px-4 py-4" scope="col">{t("status")}</th>
+                  <th className="px-2 py-4" scope="col">
+                    <span className="sr-only">{deletion("button")}</span>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -209,6 +227,11 @@ export function ProductList() {
                       <td className="px-4 py-4 text-right tabular-nums">{product.trackInventory ? quantity : "—"}</td>
                       <td className="px-4 py-4">
                         <StockBadge active={product.active} quantity={quantity} reorderPoint={product.reorderPoint} tracked={product.trackInventory} />
+                      </td>
+                      <td className="px-2 py-2">
+                        <div className="flex justify-end">
+                          <DeleteProduct compact onDeleted={() => removed(product)} product={product} />
+                        </div>
                       </td>
                     </tr>
                   );

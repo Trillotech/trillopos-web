@@ -89,7 +89,9 @@
     "invalid_range": "The dates are the wrong way round.",
     "forbidden": "Your role cannot do that.",
     "unauthenticated": "Sign in again.",
-    "not_found": "Not found."
+    "not_found": "Not found.",
+    "product_has_stock": "This product still has stock.",
+    "product_stock_negative": "This product has negative stock. Correct the count under Stock before deleting it."
   },
   "shell": {
     "product": "TrilloPOS",
@@ -980,5 +982,14 @@
       "report": "Write down what you did and what you expected, take a screenshot, and send both to the person who set up TrilloPOS for you.",
       "history": "Nothing in TrilloPOS is ever deleted. A mistaken sale is corrected with a return, and a mistaken expense can be voided. That is on purpose: the history always explains the numbers."
     }
+  },
+  "productDelete": {
+    "button": "Delete",
+    "buttonFor": "Delete {name}",
+    "title": "Delete {name}?",
+    "body": "It disappears from your products and the sale screen. Past sales, receipts and reports keep it.",
+    "stock": "It still has {quantity} in stock. Deleting it records them as written off, so your stock value stays right.",
+    "confirm": "Yes, delete",
+    "deleted": "{name} deleted."
   }
 }

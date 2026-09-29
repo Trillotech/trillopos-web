@@ -4,13 +4,16 @@ import { useEffect, useState } from "react";
 import Decimal from "decimal.js";
 import { useTranslations } from "next-intl";
 
+import { DeleteProduct } from "@/components/delete-product";
 import { Badge, ButtonLink, Page, PageHeader, PageLoading, Panel } from "@/components/ui";
+import { useRouter } from "@/i18n/navigation";
 import type { Schemas } from "@/lib/backend";
 import { addQuantities, formatAmount, formatQuantity, marginPercent, weightedAverageCost } from "@/lib/money";
 import { readJson } from "@/lib/read-json";
 
 export function ProductDetail({ productId }: { productId: string }) {
   const t = useTranslations("productDetail");
+  const router = useRouter();
   const [product, setProduct] = useState<Schemas["ProductView"]>();
   const [category, setCategory] = useState("—");
   const [locations, setLocations] = useState<Schemas["LocationView"][]>([]);
@@ -45,9 +48,15 @@ export function ProductDetail({ productId }: { productId: string }) {
     <Page>
       <PageHeader
         actions={
-          <ButtonLink href={`/products/${product.id}/edit`} variant="secondary">
-            {t("edit")}
-          </ButtonLink>
+          <div className="flex flex-wrap gap-2">
+            <ButtonLink href={`/products/${product.id}/edit`} variant="secondary">
+              {t("edit")}
+            </ButtonLink>
+            <DeleteProduct
+              onDeleted={() => router.push(`/products?deleted=${encodeURIComponent(product.name ?? "")}`)}
+              product={product}
+            />
+          </div>
         }
         subtitle={
           <span className="flex flex-wrap items-center gap-2">
