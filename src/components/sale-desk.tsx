@@ -25,6 +25,7 @@ import type { Schemas } from "@/lib/backend";
 import { useCodes } from "@/lib/codes";
 import { formatAmount, addQuantities } from "@/lib/money";
 import { messageFor, readJson } from "@/lib/read-json";
+import { useMembershipRole } from "@/lib/role";
 import { matchesWords } from "@/lib/search";
 
 type Product = Schemas["ProductView"];
@@ -45,6 +46,7 @@ type ErrorAt = "shift" | "customer" | "cart";
 const cashMethods = ["CASH", "KBZ_PAY", "WAVE_PAY", "AYA_PAY", "CB_PAY", "BANK_TRANSFER", "OTHER"] as const;
 
 export function SaleDesk() {
+  const { locationId: scope, register } = useMembershipRole();
   const t = useTranslations("sale");
   const errors = useTranslations("errors");
   const codes = useCodes();
@@ -82,8 +84,9 @@ export function SaleDesk() {
 
   useEffect(() => {
     void readJson<Location[]>("/api/org/locations").then((rows) => {
-      setLocations(rows);
-      const store = rows.find((row) => row.type === "STORE" && row.active !== false);
+      const allowed = rows.filter(row => !scope || row.id === scope);
+      setLocations(allowed);
+      const store = allowed.find((row) => row.type === "STORE" && row.active !== false);
       if (store?.id) {
         setLocationId(store.id);
       }
@@ -93,11 +96,11 @@ export function SaleDesk() {
       setProductsLoaded(true);
     });
     void readJson<Schemas["OrganizationView"]>("/api/catalog/organization").then((org) => {
-      if (org.businessType === "ONLINE") {
+      if (org.businessType === "ONLINE" && !register) {
         chooseMode("ONLINE");
       }
     });
-  }, []);
+  }, [scope, register]);
 
   useEffect(() => {
     if (!locationId) {

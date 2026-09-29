@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { Alert, Button, buttonClasses, LoadingRows, SignOut } from "@/components/ui";
-import { useRouter } from "@/i18n/navigation";
+import { Link, useRouter } from "@/i18n/navigation";
 import type { Membership } from "@/lib/backend";
 
 type Session =
@@ -121,6 +121,7 @@ export function BusinessPicker() {
         </ul>
       )}
       {error ? <Alert>{error}</Alert> : null}
+      <Link className={buttonClasses("secondary")} href="/join">{t("joinCode")}</Link>
       <SignOut className={quietSignOut} label={t("logout")} />
     </div>
   );

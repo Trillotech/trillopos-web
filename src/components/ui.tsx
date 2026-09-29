@@ -68,8 +68,9 @@ export function SignOut({
       disabled={pending}
       onClick={async () => {
         setPending(true);
-        await fetch("/api/auth/logout", { method: "POST" });
-        router.replace("/login");
+        const response = await fetch("/api/auth/logout", { method: "POST" });
+        router.replace(response.headers.get("X-Login-Path") === "/register" ? "/register" : "/login");
+        router.refresh();
       }}
       type="button"
     >

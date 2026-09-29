@@ -21,6 +21,7 @@ import {
 } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
 import type { Schemas } from "@/lib/backend";
+import { useMembershipRole } from "@/lib/role";
 import { useCodes } from "@/lib/codes";
 import { formatAmount, formatQuantity } from "@/lib/money";
 import { messageFor, readJson } from "@/lib/read-json";
@@ -36,6 +37,7 @@ const types = ["STOCK_IN", "STOCK_OUT", "ADJUSTMENT", "TRANSFER", "OPENING"] as 
 const docTone = (status?: string) => (status === "POSTED" ? "ok" : status === "DRAFT" ? "warn" : "muted");
 
 export function StockDesk() {
+  const { locationId: scope } = useMembershipRole();
   const t = useTranslations("stock");
   const errors = useTranslations("errors");
   const codes = useCodes();
@@ -80,7 +82,8 @@ export function StockDesk() {
         setLedgerProduct(rows[0].id);
       }
     });
-    void readJson<Location[]>("/api/org/locations").then((rows) => {
+    void readJson<Location[]>("/api/org/locations").then((all) => {
+      const rows = scope ? all.filter(row => row.id === scope) : all;
       setLocations(rows);
       if (rows[0]?.id) {
         setLocationId(rows[0].id);

@@ -47,13 +47,14 @@ export function addQuantities(values: Array<string | number | undefined>) {
 
 /** Quantity-weighted average of stock-balance costs. */
 export function weightedAverageCost(
-  rows: Array<{ quantity?: number; averageCost?: number }>,
+  rows: Array<{ quantity?: number; averageCost?: number | null }>,
 ) {
   let qty = new Decimal(0);
   let value = new Decimal(0);
   for (const row of rows) {
     const q = new Decimal(row.quantity ?? 0);
-    if (q.lte(0) || row.averageCost === undefined) {
+    // The backend redacts costs for cashier/packer sessions with null.
+    if (q.lte(0) || row.averageCost == null) {
       continue;
     }
     qty = qty.plus(q);

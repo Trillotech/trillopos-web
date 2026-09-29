@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Decimal from "decimal.js";
 import { useTranslations } from "next-intl";
 
+import { useMembershipRole } from "@/lib/role";
 import { DeleteProduct } from "@/components/delete-product";
 import { Badge, ButtonLink, Page, PageHeader, PageLoading, Panel } from "@/components/ui";
 import { useRouter } from "@/i18n/navigation";
@@ -12,6 +13,7 @@ import { addQuantities, formatAmount, formatQuantity, marginPercent, weightedAve
 import { readJson } from "@/lib/read-json";
 
 export function ProductDetail({ productId }: { productId: string }) {
+  const { managesStock } = useMembershipRole();
   const t = useTranslations("productDetail");
   const router = useRouter();
   const [product, setProduct] = useState<Schemas["ProductView"]>();
@@ -39,7 +41,7 @@ export function ProductDetail({ productId }: { productId: string }) {
   if (!product) {
     return <PageLoading panels={2} />;
   }
-  const cost = weightedAverageCost(balances);
+  const cost = managesStock ? weightedAverageCost(balances) : null;
   const quantity = addQuantities(balances.map((row) => row.quantity));
   const margin = cost && product.retailPrice !== undefined ? marginPercent(String(product.retailPrice), cost) : null;
   const low = product.trackInventory && new Decimal(quantity || 0).lte(product.reorderPoint ?? 0);
@@ -47,7 +49,7 @@ export function ProductDetail({ productId }: { productId: string }) {
   return (
     <Page>
       <PageHeader
-        actions={
+        actions={managesStock ?
           <div className="flex flex-wrap gap-2">
             <ButtonLink href={`/products/${product.id}/edit`} variant="secondary">
               {t("edit")}
@@ -56,7 +58,7 @@ export function ProductDetail({ productId }: { productId: string }) {
               onDeleted={() => router.push(`/products?deleted=${encodeURIComponent(product.name ?? "")}`)}
               product={product}
             />
-          </div>
+          </div> : null
         }
         subtitle={
           <span className="flex flex-wrap items-center gap-2">
@@ -69,9 +71,9 @@ export function ProductDetail({ productId }: { productId: string }) {
       />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <Stat currency={currency} label={t("retail")} note={margin ? t("margin", { value: margin }) : undefined} value={formatAmount(product.retailPrice)} />
+        <Stat currency={currency} label={t("retail")} note={managesStock && margin ? t("margin", { value: margin }) : undefined} value={formatAmount(product.retailPrice)} />
         <Stat currency={currency} label={t("wholesale")} value={formatAmount(product.wholesalePrice)} />
-        <Stat currency={currency} label={t("cost")} value={cost ? formatAmount(cost) : "—"} />
+        {managesStock ? <Stat currency={currency} label={t("cost")} value={cost ? formatAmount(cost) : "—"} /> : null}
         <Stat
           label={t("stock")}
           note={product.trackInventory ? `${t("reorder")} ${product.reorderPoint ?? 0}` : undefined}

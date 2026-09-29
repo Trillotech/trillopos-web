@@ -46,7 +46,7 @@ export function ReceivableDesk() {
   const t = useTranslations("receivables");
   const errors = useTranslations("errors");
   const codes = useCodes();
-  const { owner } = useMembershipRole();
+  const { owner, locationId: scope } = useMembershipRole();
   const [rows, setRows] = useState<Row[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -85,14 +85,15 @@ export function ReceivableDesk() {
 
   useEffect(() => {
     void readJson<Customer[]>("/api/customers").then(setCustomers);
-    void readJson<Location[]>("/api/org/locations").then((found) => {
+    void readJson<Location[]>("/api/org/locations").then((all) => {
+      const found = scope ? all.filter(row => row.id === scope) : all;
       setLocations(found);
       if (found[0]?.id) {
         setLocationId(found[0].id);
         setManualCustomer("");
       }
     });
-  }, []);
+  }, [scope]);
 
   useEffect(() => {
     void load()

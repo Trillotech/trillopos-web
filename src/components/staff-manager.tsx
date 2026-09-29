@@ -25,6 +25,8 @@ export function StaffManager() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState<Schemas["InviteRequest"]["role"]>("CASHIER");
+  const [locationId, setLocationId] = useState("");
+  const [pinCreated, setPinCreated] = useState(false);
   const [pin, setPin] = useState("");
   const [code, setCode] = useState<string>();
   const [copied, setCopied] = useState(false);
@@ -61,9 +63,10 @@ export function StaffManager() {
     try {
       const created = await readJson<Schemas["InviteResponse"]>("/api/org/memberships", {
         method: "POST",
-        body: JSON.stringify({ displayName, role, pin: pin || undefined }),
+        body: JSON.stringify({ displayName, role, pin: pin || undefined, locationId: locationId || undefined }),
       });
       setCode(created.inviteCode);
+      setPinCreated(Boolean(pin));
       setCopied(false);
       setDisplayName("");
       setPin("");
@@ -103,6 +106,7 @@ export function StaffManager() {
             onClick={() => {
               setFormError(undefined);
               setCode(undefined);
+              setPinCreated(false);
               setAdding(true);
             }}
             type="button"
@@ -157,15 +161,15 @@ export function StaffManager() {
       )}
 
       <Modal onClose={() => setAdding(false)} open={adding} title={t("invite")}>
-        {code ? (
+        {code || pinCreated ? (
           <div className="flex flex-col gap-4">
-            <Alert tone="success">{t("added")}</Alert>
-            <div className="flex flex-col gap-2">
+            <Alert tone="success">{t(pinCreated ? "pinAdded" : "added")}</Alert>
+            {code ? <div className="flex flex-col gap-2">
               <p className="text-sm font-medium text-ink">{t("code")}</p>
               <p className="rounded-button border border-line bg-surface px-4 py-2 font-mono text-base tracking-wide">{code}</p>
-            </div>
+            </div> : null}
             <div className="flex flex-wrap gap-2">
-              <Button
+              {code ? <Button
                 onClick={() => {
                   void navigator.clipboard?.writeText(code).then(() => setCopied(true));
                 }}
@@ -173,7 +177,7 @@ export function StaffManager() {
                 variant="secondary"
               >
                 {copied ? t("copied") : t("copy")}
-              </Button>
+              </Button> : null}
               <Button onClick={() => setAdding(false)} type="button">{t("done")}</Button>
             </div>
           </div>
@@ -186,6 +190,10 @@ export function StaffManager() {
               ))}
             </SelectField>
             <p className="text-xs text-slate">{t(`roleHint.${role}`)}</p>
+            <SelectField label={t("location")} value={locationId} onChange={event => setLocationId(event.target.value)}>
+              <option value="">{t("allLocations")}</option>
+              {locations.map(location => <option key={location.id} value={location.id}>{location.name}</option>)}
+            </SelectField>
             <Field hint={t("pinHint")} inputMode="numeric" label={t("pin")} maxLength={6} onChange={(event) => setPin(event.target.value)} value={pin} />
             {formError ? <Alert>{formError}</Alert> : null}
             <Button busy={busy === "add"} className="self-start" disabled={!displayName} type="submit">
