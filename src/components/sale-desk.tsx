@@ -159,9 +159,11 @@ export function SaleDesk() {
   }
 
   function payments() {
+    // the only payment, left empty (or cash handed over): the backend takes the whole total
+    const whole = tenders.length === 1;
     return tenders.map((tender) => ({
       method: tender.method,
-      amount: tender.amount || "0",
+      amount: whole && (!tender.amount || tender.method === "CASH") ? undefined : tender.amount || "0",
       tenderedAmount: tender.method === "CASH" ? tender.amount || undefined : undefined,
       referenceNo: tender.reference || undefined,
     }));
@@ -587,7 +589,7 @@ export function SaleDesk() {
                         </IconButton>
                       ) : null}
                     </div>
-                    <Field inputMode="decimal" label={tender.method === "CASH" ? t("tendered") : t("amount")} onChange={(event) => setTenders((current) => current.map((row, rowIndex) => rowIndex === index ? { ...row, amount: event.target.value } : row))} value={tender.amount} />
+                    <Field hint={tenders.length === 1 ? t("amountHint") : undefined} inputMode="decimal" label={tender.method === "CASH" ? t("tendered") : t("amount")} onChange={(event) => setTenders((current) => current.map((row, rowIndex) => rowIndex === index ? { ...row, amount: event.target.value } : row))} value={tender.amount} />
                     {tender.method !== "CASH" && tender.method !== "CREDIT" ? (
                       <Field label={t("reference")} onChange={(event) => setTenders((current) => current.map((row, rowIndex) => rowIndex === index ? { ...row, reference: event.target.value } : row))} value={tender.reference} />
                     ) : null}

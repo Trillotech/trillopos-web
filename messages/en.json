@@ -206,7 +206,10 @@
     "saving": "Saving…",
     "options": "Where and how it sells",
     "archiveQuestion": "Archive this product? It won't be sold any more; past sales keep it.",
-    "archiveConfirm": "Yes, archive it"
+    "archiveConfirm": "Yes, archive it",
+    "nameRequired": "Enter the product name.",
+    "locationRequired": "Choose where the opening stock is.",
+    "loadFailed": "Could not load categories and places."
   },
   "productDetail": {
     "edit": "Edit",
@@ -455,7 +458,8 @@
     "removeLine": "Remove {name}",
     "removePayment": "Remove this payment",
     "noCustomers": "No customer found. Add them below.",
-    "modeLabel": "Where the sale happens"
+    "modeLabel": "Where the sale happens",
+    "amountHint": "Leave it empty to take the whole total."
   },
   "held": {
     "title": "Held sales",

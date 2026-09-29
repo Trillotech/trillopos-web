@@ -1318,7 +1318,7 @@ export interface components {
         PaymentRequest: {
             /** @enum {string} */
             method: "CASH" | "KBZ_PAY" | "WAVE_PAY" | "AYA_PAY" | "CB_PAY" | "BANK_TRANSFER" | "CREDIT" | "OTHER";
-            amount: number;
+            amount?: number;
             tenderedAmount?: number;
             referenceNo?: string;
         };
