@@ -5,18 +5,22 @@ import { useTranslations } from "next-intl";
 
 import { PlusIcon } from "@/components/icons";
 import { libraryName } from "@/components/size-chart-select";
-import { Alert, Badge, Button, ConfirmButton, Field, Modal, SelectField, TextArea } from "@/components/ui";
+import { SizeTableEditor } from "@/components/size-table-editor";
+import { Alert, Badge, Button, ConfirmButton, Field, Modal, SelectField } from "@/components/ui";
 import { messageFor, readJson } from "@/lib/read-json";
-import { parseLabels, sizeChartKinds, type SizeChart, type SizeChartKind, type SizeChartTemplate } from "@/lib/size-charts";
-
-/** "35, 35.5, 36 … 48": enough of a chart to recognise it. */
-function preview(labels: string[] = []) {
-  return labels.length > 5 ? `${labels.slice(0, 3).join(", ")} … ${labels[labels.length - 1]}` : labels.join(", ");
-}
+import {
+  sizeChartKinds,
+  sizeRange,
+  systemsLine,
+  type SizeChart,
+  type SizeChartKind,
+  type SizeChartTemplate,
+} from "@/lib/size-charts";
 
 /**
- * The shop's size charts: take one from the library, type one, change the sizes of either, delete
- * one. Products already made keep the names and sizes they were made with.
+ * The shop's size tables: take one from the library, change it (which system labels the stock,
+ * which sizes, the conversions), make one, delete one. Products already made keep the names and
+ * sizes they were made with.
  */
 export function SizeChartManager({
   open,
@@ -36,9 +40,9 @@ export function SizeChartManager({
   const errors = useTranslations("errors");
   const [editing, setEditing] = useState<SizeChart | "new">();
   const [name, setName] = useState("");
-  const [shortName, setShortName] = useState("");
   const [kind, setKind] = useState<SizeChartKind>("OTHER");
-  const [labels, setLabels] = useState("");
+  const [systems, setSystems] = useState<string[]>([]);
+  const [rows, setRows] = useState<string[][]>([]);
   const [busy, setBusy] = useState<string>();
   const [error, setError] = useState<string>();
   const taken = new Set(charts.map((chart) => chart.templateKey).filter(Boolean));
@@ -46,9 +50,10 @@ export function SizeChartManager({
   function edit(chart: SizeChart | "new") {
     setError(undefined);
     setName(chart === "new" ? "" : (chart.name ?? ""));
-    setShortName(chart === "new" ? "" : (chart.shortName ?? ""));
     setKind(chart === "new" ? "OTHER" : (chart.kind ?? "OTHER"));
-    setLabels(chart === "new" ? "" : (chart.labels ?? []).join(", "));
+    // a new table starts with one unnamed column and room for three sizes
+    setSystems(chart === "new" ? [""] : [...(chart.systems ?? [""])]);
+    setRows(chart === "new" ? [[""], [""], [""]] : (chart.rows ?? []).map((row) => [...row]));
     setEditing(chart);
   }
 
@@ -69,12 +74,12 @@ export function SizeChartManager({
 
   async function save(event: React.FormEvent) {
     event.preventDefault();
-    const sizes = parseLabels(labels);
-    if (!name.trim() || sizes.length === 0) {
+    const filled = rows.filter((row) => row.some((cell) => cell.trim()));
+    if (!name.trim() || filled.length === 0) {
       setError(t(name.trim() ? "labelsRequired" : "nameRequired"));
       return;
     }
-    const body = JSON.stringify({ name, shortName, kind, labels: sizes });
+    const body = JSON.stringify({ name, kind, systems, rows: filled });
     const saved = await run("save", () =>
       editing === "new" || !editing?.id
         ? readJson("/api/catalog/size-charts", { method: "POST", body })
@@ -101,9 +106,8 @@ export function SizeChartManager({
     <Modal onClose={close} open={open} title={editing ? t(editing === "new" ? "newTitle" : "editTitle") : t("title")} wide>
       {editing ? (
         <form className="flex flex-col gap-4 text-left" onSubmit={(event) => void save(event)}>
-          <Field label={t("name")} maxLength={80} onChange={(event) => setName(event.target.value)} required value={name} />
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field hint={t("shortNameHint")} label={t("shortName")} maxLength={10} onChange={(event) => setShortName(event.target.value)} value={shortName} />
+            <Field label={t("name")} maxLength={80} onChange={(event) => setName(event.target.value)} required value={name} />
             <SelectField label={t("kind")} onChange={(event) => setKind(event.target.value as SizeChartKind)} value={kind}>
               {sizeChartKinds.map((value) => (
                 <option key={value} value={value}>
@@ -112,7 +116,15 @@ export function SizeChartManager({
               ))}
             </SelectField>
           </div>
-          <TextArea hint={t("labelsHint")} label={t("labels")} onChange={(event) => setLabels(event.target.value)} required value={labels} />
+          <SizeTableEditor
+            onChange={(nextSystems, nextRows) => {
+              setSystems(nextSystems);
+              setRows(nextRows);
+            }}
+            rows={rows}
+            systems={systems}
+          />
+          <p className="text-xs text-slate">{t("brandHint")}</p>
           {error ? <Alert>{error}</Alert> : null}
           <div className="flex flex-wrap justify-end gap-2">
             <Button onClick={() => setEditing(undefined)} type="button" variant="secondary">
@@ -143,7 +155,7 @@ export function SizeChartManager({
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-semibold text-ink">{chart.name}</span>
                       <span className="block truncate text-xs text-slate">
-                        {t("count", { count: chart.labels?.length ?? 0 })} · {preview(chart.labels)}
+                        {t("count", { count: chart.rows?.length ?? 0 })} · {systemsLine(chart, t("unnamed"))}
                       </span>
                     </span>
                     <Button aria-label={t("editFor", { name: chart.name ?? "" })} onClick={() => edit(chart)} type="button" variant="secondary">
@@ -171,7 +183,9 @@ export function SizeChartManager({
                       <li className="flex items-center gap-4 px-4 py-2" key={template.key}>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate font-medium text-ink">{libraryName(names, template)}</span>
-                          <span className="block truncate text-xs text-slate">{preview(template.labels)}</span>
+                          <span className="block text-xs text-slate">
+                            {systemsLine(template, t("unnamed"))} · {sizeRange(template)}
+                          </span>
                         </span>
                         {taken.has(template.key) ? (
                           <Badge tone="ok">{t("added")}</Badge>

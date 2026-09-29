@@ -17,6 +17,8 @@ import {
   loadSizeCharts,
   resolveChart,
   sizeDisplay,
+  sizeEquivalents as equivalentsOf,
+  sizeLabels,
   type ChartChoice,
   type SizeChart,
   type SizeChartTemplate,
@@ -45,6 +47,8 @@ export function ProductForm({ productId }: { productId?: string }) {
   const [categoryId, setCategoryId] = useState("");
   const [unit, setUnit] = useState<Schemas["ProductWrite"]["unit"]>("PIECE");
   const [sizeLabel, setSizeLabel] = useState("");
+  // editing a size: the same size in other systems, "UK 8 · US M 9"
+  const [sizeEquivalents, setSizeEquivalents] = useState("");
   // adding in sizes: the chart, and the sizes picked with their opening quantity ("" for none yet)
   const [chart, setChart] = useState<ChartChoice>("");
   const [sizes, setSizes] = useState<Record<string, string>>({});
@@ -97,6 +101,7 @@ export function ProductForm({ productId }: { productId?: string }) {
       setCategoryId(product.categoryId ?? "");
       setUnit(product.unit ?? "PIECE");
       setSizeLabel(product.sizeLabel ?? "");
+      setSizeEquivalents(product.sizeEquivalents ?? "");
       setRetailPrice(product.retailPrice === undefined ? "" : String(product.retailPrice));
       setWholesalePrice(product.wholesalePrice === undefined ? "" : String(product.wholesalePrice));
       setTrackInventory(product.trackInventory !== false);
@@ -112,7 +117,9 @@ export function ProductForm({ productId }: { productId?: string }) {
   const margin = marginPercent(retailPrice, openingCost);
   const profit = profitPerUnit(retailPrice, openingCost);
   const sizeChart = choiceChart(chart, charts, library);
-  const picked = (sizeChart?.labels ?? []).filter((label) => label in sizes);
+  const labels = sizeLabels(sizeChart);
+  const picked = labels.filter((label) => label in sizes);
+  const [labelSystem, ...otherSystems] = sizeChart?.systems ?? [];
 
   function pickChart(choice: ChartChoice) {
     setChart(choice);
@@ -223,6 +230,8 @@ export function ProductForm({ productId }: { productId?: string }) {
       categoryId: categoryId || undefined,
       unit,
       sizeLabel: sizeLabel || undefined,
+      // an emptied box removes them; a product without sizes never sends the field
+      sizeEquivalents: editing && (sizeLabel || sizeEquivalents) ? sizeEquivalents : undefined,
       retailPrice: retailPrice || undefined,
       wholesalePrice: wholesalePrice || undefined,
       trackInventory,
@@ -297,6 +306,16 @@ export function ProductForm({ productId }: { productId?: string }) {
             ))}
           </SelectField>
           {inSizes ? null : <Field label={t("size")} onChange={(event) => setSizeLabel(event.target.value)} value={sizeLabel} />}
+          {editing && (sizeLabel || sizeEquivalents) ? (
+            <Field
+              className="sm:col-span-2"
+              hint={t("sameSizeHint")}
+              label={t("sameSize")}
+              maxLength={255}
+              onChange={(event) => setSizeEquivalents(event.target.value)}
+              value={sizeEquivalents}
+            />
+          ) : null}
         </div>
       </Panel>
       {editing ? null : (
@@ -304,7 +323,13 @@ export function ProductForm({ productId }: { productId?: string }) {
           <div className="flex flex-col gap-4">
             <SizeChartSelect
               charts={charts}
-              hint={sizeChart ? t("sizesSkuHint") : t("sizesHint")}
+              hint={
+                sizeChart
+                  ? otherSystems.length > 0
+                    ? t("labelledBy", { system: labelSystem || t("unnamedSystem"), others: otherSystems.map((system) => system || t("unnamedSystem")).join(" · ") })
+                    : t("labelledByAlone", { system: labelSystem || t("unnamedSystem") })
+                  : t("sizesHint")
+              }
               label={t("sizeChart")}
               library={library}
               noneLabel={t("oneProduct")}
@@ -318,7 +343,7 @@ export function ProductForm({ productId }: { productId?: string }) {
                     {t("pickSizes")}
                   </p>
                   <div className="flex gap-2">
-                    <Button onClick={() => setSizes(Object.fromEntries((sizeChart.labels ?? []).map((label) => [label, sizes[label] ?? ""])))} type="button" variant="ghost">
+                    <Button onClick={() => setSizes(Object.fromEntries(labels.map((label) => [label, sizes[label] ?? ""])))} type="button" variant="ghost">
                       {t("allSizes")}
                     </Button>
                     <Button onClick={() => setSizes({})} type="button" variant="ghost">
@@ -327,7 +352,7 @@ export function ProductForm({ productId }: { productId?: string }) {
                   </div>
                 </div>
                 <div aria-labelledby={sizePickerId} className="grid grid-cols-4 gap-2 sm:grid-cols-6" role="group">
-                  {(sizeChart.labels ?? []).map((label) => {
+                  {labels.map((label) => {
                     const on = label in sizes;
                     return (
                       <button
@@ -348,19 +373,29 @@ export function ProductForm({ productId }: { productId?: string }) {
                   <div className="flex flex-col gap-2 border-t border-line pt-4">
                     <h3 className="text-sm font-semibold text-ink">{t("sizeStock")}</h3>
                     <p className="text-xs text-slate">{t("sizeStockHint")}</p>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
-                      {picked.map((label) => (
-                        <Field
-                          aria-label={t("quantityFor", { size: sizeDisplay(sizeChart, label) })}
-                          inputMode="decimal"
-                          key={label}
-                          label={sizeDisplay(sizeChart, label)}
-                          onChange={(event) => setSizes((current) => ({ ...current, [label]: event.target.value }))}
-                          placeholder="0"
-                          value={sizes[label]}
-                        />
-                      ))}
-                    </div>
+                    <ul className="flex flex-col divide-y divide-line">
+                      {picked.map((label) => {
+                        const others = equivalentsOf(sizeChart, label);
+                        return (
+                          <li className="flex items-center gap-4 py-2" key={label}>
+                            <span className="min-w-0 flex-1">
+                              <span className="block text-sm font-semibold text-ink tabular-nums">{sizeDisplay(sizeChart, label)}</span>
+                              {others ? <span className="block text-xs text-slate tabular-nums">{others}</span> : null}
+                            </span>
+                            <Field
+                              className="w-24 shrink-0"
+                              hideLabel
+                              inputMode="decimal"
+                              label={t("quantityFor", { size: sizeDisplay(sizeChart, label) })}
+                              onChange={(event) => setSizes((current) => ({ ...current, [label]: event.target.value }))}
+                              placeholder="0"
+                              value={sizes[label]}
+                            />
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <p className="text-xs text-slate">{t("sizesSkuHint")}</p>
                     <p className="text-sm text-slate">
                       {t("sizesSummary", {
                         count: picked.length,

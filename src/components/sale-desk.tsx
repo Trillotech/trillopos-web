@@ -25,6 +25,7 @@ import type { Schemas } from "@/lib/backend";
 import { useCodes } from "@/lib/codes";
 import { formatAmount, addQuantities } from "@/lib/money";
 import { messageFor, readJson } from "@/lib/read-json";
+import { matchesWords } from "@/lib/search";
 
 type Product = Schemas["ProductView"];
 type Location = Schemas["LocationView"];
@@ -121,7 +122,7 @@ export function SaleDesk() {
   const visible = products.filter((product) => {
     const needle = query.trim().toLowerCase();
     const listed = mode === "ONLINE" ? product.sellOnline === true : product.sellInPos !== false;
-    return product.active !== false && listed && (!needle || `${product.name} ${product.sku}`.toLowerCase().includes(needle));
+    return product.active !== false && listed && (!needle || matchesWords(needle, product.name, product.sku, product.sizeEquivalents));
   });
 
   function fail(at: ErrorAt, caught: unknown) {
@@ -438,8 +439,10 @@ export function SaleDesk() {
                           type="button"
                         >
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate font-medium text-ink">{product.name}</span>
-                            {product.sku ? <span className="block truncate text-xs text-slate">{product.sku}</span> : null}
+                            <span className="line-clamp-2 font-medium break-words text-ink">{product.name}</span>
+                            {product.sku || product.sizeEquivalents ? (
+                              <span className="block truncate text-xs text-slate">{[product.sizeEquivalents, product.sku].filter(Boolean).join(" · ")}</span>
+                            ) : null}
                           </span>
                           <span className="font-semibold text-ink tabular-nums">{formatAmount(product.retailPrice)}</span>
                           <PlusIcon className="size-5 shrink-0 text-indigo" />
