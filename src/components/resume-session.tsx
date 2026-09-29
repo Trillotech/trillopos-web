@@ -28,7 +28,7 @@ export function ResumeSession() {
       // storage can be blocked; then there is no loop guard, only the renewal
     }
     if (recent) {
-      router.replace("/login");
+      void fetch("/api/registers/device").then(r => r.json()).then(body => router.replace(body.configured ? "/register" : "/login")).catch(() => router.replace("/login"));
       return;
     }
     void fetch("/api/auth/resume", { method: "POST" })
@@ -36,7 +36,7 @@ export function ResumeSession() {
         if (response.status === 204) {
           window.location.reload();
         } else if (response.status === 401) {
-          router.replace("/login");
+          void fetch("/api/registers/device").then(r => r.json()).then(body => router.replace(body.configured ? "/register" : "/login")).catch(() => router.replace("/login"));
         } else {
           setFailed(true);
         }

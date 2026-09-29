@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 
-import { ChevronDownIcon, PlusIcon } from "@/components/icons";
+import { PlusIcon } from "@/components/icons";
 import {
   Alert,
   Badge,
@@ -11,15 +11,12 @@ import {
   ConfirmButton,
   EmptyState,
   Field,
-  focusRing,
   LoadingRows,
   Modal,
   Page,
   PageHeader,
-  Panel,
   SelectField,
 } from "@/components/ui";
-import { useRouter } from "@/i18n/navigation";
 import type { Schemas } from "@/lib/backend";
 import { useCodes } from "@/lib/codes";
 import { messageFor, readJson } from "@/lib/read-json";
@@ -31,7 +28,8 @@ export function RegisterManager() {
   const t = useTranslations("registers");
   const errors = useTranslations("errors");
   const codes = useCodes();
-  const router = useRouter();
+  const locale = useLocale();
+  const staff = useTranslations("staffAccess");
   const [rows, setRows] = useState<Register[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -105,25 +103,13 @@ export function RegisterManager() {
     }
   }
 
-  async function pinSignIn(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    setError(undefined);
-    setBusy("pin");
+  async function activateThisDevice() {
+    setBusy("device");
     try {
-      await readJson("/api/registers/pin", {
-        method: "POST",
-        body: JSON.stringify({
-          deviceCredential: form.get("deviceCredential"),
-          membershipId: form.get("membershipId"),
-          pin: form.get("pin"),
-        }),
-      });
-      router.push("/products");
-    } catch (caught) {
-      fail(caught, false);
-      setBusy(undefined);
-    }
+      await readJson("/api/registers/device", { method: "POST", body: JSON.stringify({ credential }) });
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- discard the owner session and cached console on this shared device
+      window.location.assign(`/${locale}/register`);
+    } catch (caught) { fail(caught, true); setBusy(undefined); }
   }
 
   const store = (id?: string) => locations.find((row) => row.id === id)?.name ?? "—";
@@ -193,26 +179,6 @@ export function RegisterManager() {
         </ul>
       )}
 
-      <Panel>
-        <details className="group">
-          <summary
-            className={`-m-2 flex min-h-12 cursor-pointer list-none items-center justify-between gap-2 rounded-button p-2 text-base font-semibold text-ink hover:bg-slate-50 sm:min-h-10 [&::-webkit-details-marker]:hidden ${focusRing}`}
-          >
-            {t("pinLogin")}
-            <ChevronDownIcon className="size-4 text-slate transition group-open:rotate-180 motion-reduce:transition-none" />
-          </summary>
-          <p className="mt-4 text-sm text-slate">{t("pinLoginHint")}</p>
-          <form className="mt-4 grid gap-4 sm:grid-cols-3 sm:items-end" onSubmit={(event) => void pinSignIn(event)}>
-            <Field label={t("credential")} name="deviceCredential" required />
-            <Field label={t("membership")} name="membershipId" required />
-            <Field inputMode="numeric" label={t("pin")} maxLength={6} name="pin" required type="password" />
-            <Button busy={busy === "pin"} className="sm:col-span-3 sm:justify-self-start" type="submit">
-              {t("pinLogin")}
-            </Button>
-          </form>
-        </details>
-      </Panel>
-
       <Modal onClose={() => setAdding(false)} open={adding} title={t("bindTitle")}>
         {credential ? (
           <div className="flex flex-col gap-4">
@@ -222,6 +188,8 @@ export function RegisterManager() {
               <p className="rounded-button border border-line bg-surface px-4 py-2 font-mono text-sm break-all">{credential}</p>
               <p className="text-xs text-slate">{t("credentialHint")}</p>
             </div>
+            {formError ? <Alert>{formError}</Alert> : null}
+            <Button busy={busy === "device"} onClick={() => void activateThisDevice()}>{staff("useThisDevice")}</Button>
             <div className="flex flex-wrap gap-2">
               <Button
                 onClick={() => {

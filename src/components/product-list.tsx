@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 
+import { useMembershipRole } from "@/lib/role";
 import { DeleteProduct } from "@/components/delete-product";
 import { BoxIcon, PlusIcon } from "@/components/icons";
 import {
@@ -31,6 +32,7 @@ type Category = Schemas["CategoryView"];
 type Balance = Schemas["BalanceView"];
 
 export function ProductList() {
+  const { managesStock } = useMembershipRole();
   const t = useTranslations("products");
   const common = useTranslations("common");
   const errors = useTranslations("errors");
@@ -105,12 +107,12 @@ export function ProductList() {
     });
   }, [products, balances, categories, query, categoryId, stock]);
 
-  const addProduct = (
+  const addProduct = managesStock ? (
     <ButtonLink href="/products/new">
       <PlusIcon className="size-5" />
       {t("add")}
     </ButtonLink>
-  );
+  ) : null;
   const money = (label: string) => (currency ? `${label} (${currency})` : label);
 
   return (
@@ -188,7 +190,7 @@ export function ProductList() {
                     </span>
                   </Link>
                   <span className="pr-2">
-                    <DeleteProduct compact onDeleted={() => removed(product)} product={product} />
+                    {managesStock ? <DeleteProduct compact onDeleted={() => removed(product)} product={product} /> : null}
                   </span>
                 </li>
               );
@@ -204,7 +206,7 @@ export function ProductList() {
                   <th className="px-4 py-4" scope="col">{t("sku")}</th>
                   <th className="hidden px-4 py-4 2xl:table-cell" scope="col">{t("barcode")}</th>
                   <th className="px-4 py-4" scope="col">{t("category")}</th>
-                  <th className="px-4 py-4 text-right" scope="col">{money(t("cost"))}</th>
+                  {managesStock ? <th className="px-4 py-4 text-right" scope="col">{money(t("cost"))}</th> : null}
                   <th className="px-4 py-4 text-right" scope="col">{money(t("retail"))}</th>
                   <th className="hidden px-4 py-4 text-right xl:table-cell" scope="col">{money(t("wholesale"))}</th>
                   <th className="px-4 py-4 text-right" scope="col">{t("stock")}</th>
@@ -218,7 +220,7 @@ export function ProductList() {
                 {rows.map((product) => {
                   const stockRows = balances.filter((row) => row.productId === product.id);
                   const quantity = addQuantities(stockRows.map((row) => row.quantity));
-                  const cost = weightedAverageCost(stockRows);
+                  const cost = managesStock ? weightedAverageCost(stockRows) : null;
                   const category = categories.find((row) => row.id === product.categoryId)?.name ?? "—";
                   return (
                     <tr className="transition-colors hover:bg-slate-50 motion-reduce:transition-none" key={product.id}>
@@ -234,7 +236,7 @@ export function ProductList() {
                       <td className="px-4 py-4 font-mono text-xs whitespace-nowrap text-slate">{product.sku}</td>
                       <td className="hidden px-4 py-4 font-mono text-xs whitespace-nowrap text-slate 2xl:table-cell">{product.barcodes?.[0] ?? "—"}</td>
                       <td className="px-4 py-4 text-slate">{category}</td>
-                      <td className="px-4 py-4 text-right tabular-nums">{cost ? formatAmount(cost) : "—"}</td>
+                      {managesStock ? <td className="px-4 py-4 text-right tabular-nums">{cost ? formatAmount(cost) : "—"}</td> : null}
                       <td className="px-4 py-4 text-right font-semibold tabular-nums">{formatAmount(product.retailPrice)}</td>
                       <td className="hidden px-4 py-4 text-right tabular-nums xl:table-cell">{formatAmount(product.wholesalePrice)}</td>
                       <td className="px-4 py-4 text-right tabular-nums">{product.trackInventory ? quantity : "—"}</td>
@@ -243,7 +245,7 @@ export function ProductList() {
                       </td>
                       <td className="px-2 py-2">
                         <div className="flex justify-end">
-                          <DeleteProduct compact onDeleted={() => removed(product)} product={product} />
+                          {managesStock ? <DeleteProduct compact onDeleted={() => removed(product)} product={product} /> : null}
                         </div>
                       </td>
                     </tr>

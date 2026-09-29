@@ -1,10 +1,5 @@
-import { accessToken, api, clearTokens, refreshToken } from "@/lib/backend";
-
+import { endSession, registerCredential } from "@/lib/register-device";
 export async function POST() {
-  const refresh = await refreshToken();
-  if (refresh) {
-    await api(await accessToken()).POST("/auth/logout", { body: { refreshToken: refresh } });
-  }
-  await clearTokens();
-  return new Response(null, { status: 204 });
+  await endSession();
+  return new Response(null, { status: 204, headers: { "X-Login-Path": await registerCredential() ? "/register" : "/login" } });
 }

@@ -37,7 +37,7 @@ export function ExpenseDesk() {
   const t = useTranslations("expenses");
   const errors = useTranslations("errors");
   const codes = useCodes();
-  const { owner, managesStock } = useMembershipRole();
+  const { owner, managesStock, locationId: scope } = useMembershipRole();
   const [rows, setRows] = useState<Expense[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -84,7 +84,8 @@ export function ExpenseDesk() {
 
   useEffect(() => {
     void loadCategories();
-    void readJson<Location[]>("/api/org/locations").then((found) => {
+    void readJson<Location[]>("/api/org/locations").then((all) => {
+      const found = scope ? all.filter(row => row.id === scope) : all;
       setLocations(found);
       if (found[0]?.id) {
         setLocationId(found[0].id);

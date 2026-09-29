@@ -45,7 +45,7 @@ function maxAge(iso: string | undefined, fallback: number) {
   return seconds > 0 ? seconds : fallback;
 }
 
-function cookieOptions(maxAgeSeconds: number) {
+export function cookieOptions(maxAgeSeconds: number) {
   return {
     httpOnly: true,
     // https-only in production; TRILLOPOS_COOKIE_SECURE=false only for the end-to-end tests, which

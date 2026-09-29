@@ -21,6 +21,9 @@ import {
 } from "@/components/icons";
 import { ButtonLink, focusRing, insetFocusRing, SignOut } from "@/components/ui";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
+import { SessionContext, useMembershipRole } from "@/lib/role";
+import { canOpen, canSell, type CurrentSession } from "@/lib/permissions";
+import { RoleContent } from "@/components/role-content";
 import { routing } from "@/i18n/routing";
 
 type IconType = (props: { className?: string }) => React.ReactNode;
@@ -104,11 +107,13 @@ function sectionOf(active?: string) {
 }
 
 export function Shell({
+  session,
   children,
   organizationName,
   userName,
 }: {
   children: React.ReactNode;
+  session: CurrentSession;
   organizationName: string;
   userName: string;
 }) {
@@ -142,7 +147,7 @@ export function Shell({
   }, []);
 
   return (
-    <div className="min-h-dvh bg-surface text-ink md:flex">
+    <SessionContext.Provider value={session}><div className="min-h-dvh bg-surface text-ink md:flex">
       <a
         className={`sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-button focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:shadow-lg ${focusRing}`}
         href="#main"
@@ -179,7 +184,7 @@ export function Shell({
               <CloseIcon />
             </button>
           </div>
-          <Navigation active={active} onNavigate={() => setOpen(false)} />
+          <Navigation session={session} active={active} onNavigate={() => setOpen(false)} />
           <div className="shrink-0 border-t border-line p-3">
             <AccountMenu onNavigate={() => setOpen(false)} organizationName={organizationName} userName={userName} />
           </div>
@@ -191,24 +196,24 @@ export function Shell({
         <div className="flex h-16 shrink-0 items-center px-4">
           <Brand organizationName={organizationName} />
         </div>
-        <div className="shrink-0 px-3 pb-2">
+        {canSell(session.role) ? <div className="shrink-0 px-3 pb-2">
           <ButtonLink className="w-full" href="/sales/new">
             <PlusIcon className="size-5" />
             {t("newSale")}
           </ButtonLink>
-        </div>
-        <Navigation active={active} />
+        </div> : null}
+        <Navigation session={session} active={active} />
         <div className="shrink-0 border-t border-line p-3">
           <AccountMenu organizationName={organizationName} userName={userName} />
         </div>
       </aside>
 
       <main className="min-w-0 flex-1 pb-16 focus:outline-hidden md:pb-0" id="main" tabIndex={-1}>
-        {children}
+        <RoleContent session={session}>{children}</RoleContent>
       </main>
 
-      <TabBar active={active} menuOpen={open} onMore={() => setOpen(true)} />
-    </div>
+      <TabBar session={session} active={active} menuOpen={open} onMore={() => setOpen(true)} />
+    </div></SessionContext.Provider>
   );
 }
 
@@ -238,7 +243,7 @@ const here = "bg-indigo-50 font-semibold text-indigo-700";
  * The menu. A section's pages stay folded away until it is opened; the section of the page you
  * are on opens by itself, and any section you open stays open until you close it.
  */
-function Navigation({ active, onNavigate }: { active?: string; onNavigate?: () => void }) {
+function Navigation({ session, active, onNavigate }: { session: CurrentSession; active?: string; onNavigate?: () => void }) {
   const t = useTranslations("shell");
   const id = useId();
   const current = sectionOf(active);
@@ -309,8 +314,8 @@ function Navigation({ active, onNavigate }: { active?: string; onNavigate?: () =
       aria-label={t("menu")}
       className="flex min-h-0 flex-1 flex-col overflow-y-auto px-3 py-2 [scrollbar-color:var(--line)_transparent] [scrollbar-width:thin]"
     >
-      <ul className="flex flex-col gap-0.5">{sections.map(item)}</ul>
-      <ul className="mt-auto flex flex-col gap-0.5 pt-4">{item(settings)}</ul>
+      <ul className="flex flex-col gap-0.5">{sections.filter(section => canOpen(section.href, session)).map(section => item({ ...section, pages: section.pages?.filter(page => canOpen(page.href, session)) }))}</ul>
+      <ul className="mt-auto flex flex-col gap-0.5 pt-4">{canOpen(settings.href, session) ? item({ ...settings, pages: settings.pages?.filter(page => canOpen(page.href, session)) }) : null}</ul>
     </nav>
   );
 }
@@ -329,6 +334,9 @@ function AccountMenu({
 }) {
   const t = useTranslations("shell");
   const language = useTranslations("language");
+  const staff = useTranslations("staffAccess");
+  const roles = useTranslations("codes.role");
+  const { register, role } = useMembershipRole();
   const guide = useTranslations("guide");
   const locale = useLocale();
   const pathname = usePathname();
@@ -356,7 +364,7 @@ function AccountMenu({
         </span>
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-semibold text-ink">{userName}</span>
-          <span className="block truncate text-xs text-slate">{organizationName}</span>
+          <span className="block truncate text-xs text-slate">{organizationName}{role ? ` · ${roles(role)}` : ""}</span>
         </span>
         <ChevronUpDownIcon className="size-4 shrink-0 text-slate-400" />
       </button>
@@ -365,7 +373,7 @@ function AccountMenu({
         id={id}
         popover="auto"
       >
-        <Link
+        {!register ? <Link
           className={menuItem}
           href="/account"
           onClick={() => {
@@ -375,7 +383,8 @@ function AccountMenu({
         >
           <UserIcon className="size-5 shrink-0 text-slate-500" />
           {t("account")}
-        </Link>
+        </Link> : null}
+        {!register ? <Link className={menuItem} href="/join" onClick={close}>{staff("joinAnother")}</Link> : null}
         <Link
           className={menuItem}
           href="/guide"
@@ -405,24 +414,25 @@ function AccountMenu({
           </button>
         ))}
         <div className="my-2 border-t border-line" />
-        <SignOut className={menuItem} label={t("signOut")} pendingLabel={t("signingOut")} />
+        <SignOut className={menuItem} label={register ? staff("switchStaff") : t("signOut")} pendingLabel={t("signingOut")} />
       </div>
     </>
   );
 }
 
 /** Phones only: always visible, one tap to the places a shop goes most (Material 3 navigation bar). */
-function TabBar({ active, menuOpen, onMore }: { active?: string; menuOpen: boolean; onMore: () => void }) {
+function TabBar({ session, active, menuOpen, onMore }: { session: CurrentSession; active?: string; menuOpen: boolean; onMore: () => void }) {
   const t = useTranslations("shell");
-  const current = tabs.find((tab) => active && tab.routes.includes(active));
+  const visibleTabs = tabs.filter(tab => canOpen(tab.href, session));
+  const current = visibleTabs.find((tab) => active && tab.routes.includes(active));
   const label = "block max-w-full truncate px-1 text-xs";
   return (
     <nav
       aria-label={t("tabs")}
       className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
     >
-      <ul className="grid h-16 grid-cols-5">
-        {tabs.map((tab) => {
+      <ul className="grid h-16" style={{ gridTemplateColumns: `repeat(${visibleTabs.length + 1}, minmax(0, 1fr))` }}>
+        {visibleTabs.map((tab) => {
           const Icon = tab.icon;
           const selected = current?.key === tab.key;
           return (

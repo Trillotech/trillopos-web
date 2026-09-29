@@ -36,6 +36,7 @@ function afterAuth(kind: string | undefined, router: ReturnType<typeof useRouter
 export function LoginForm({ initialError }: { initialError?: string }) {
   const t = useTranslations("login");
   const guide = useTranslations("guide");
+  const staff = useTranslations("staffAccess");
   const errors = useTranslations("errors");
   const locale = useLocale();
   const router = useRouter();
@@ -77,6 +78,10 @@ export function LoginForm({ initialError }: { initialError?: string }) {
       <Button busy={pending} className="w-full" size="lg" type="submit">
         {pending ? t("submitting") : t("submit")}
       </Button>
+      <div className="flex flex-col gap-3 text-center text-sm">
+        <Link className={linkClasses} href="/join">{staff("joinTitle")}</Link>
+        <Link className={linkClasses} href="/register">{staff("registerTitle")}</Link>
+      </div>
       <p className="text-center text-sm">
         <Link className={linkClasses} href="/signup">
           {t("signup")}

@@ -38,7 +38,8 @@
     "accepting": "Accepting…",
     "empty": "This account has no businesses yet.",
     "invited": "Invited",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "joinCode": "Join a shop as staff"
   },
   "home": {
     "title": "You're signed in",
@@ -80,7 +81,7 @@
     "wrong_password": "The current password is not right.",
     "signup_code_required": "This server needs a sign-up code.",
     "signup_code_invalid": "That sign-up code is not right.",
-    "invalid_pin": "A PIN is exactly 6 digits.",
+    "invalid_pin": "That PIN is not valid. Enter the correct 6-digit PIN.",
     "membership_removed": "That person has been removed.",
     "product_not_for_sale": "That product is not for sale this way. Check its In the shop / Online settings.",
     "insufficient_stock": "Not enough stock.",
@@ -104,7 +105,13 @@
     "sku_taken": "That SKU is already used by another product.",
     "invalid_size_chart": "A size chart has 1 to 8 systems and 1 to 80 sizes.",
     "size_label_missing": "Every size needs its size in the first column.",
-    "duplicate_size_system": "Two systems have the same name."
+    "duplicate_size_system": "Two systems have the same name.",
+    "invite_not_found": "This invite code is invalid or already used.",
+    "invite_expired": "This invitation has expired. Ask the owner for a new one.",
+    "register_required": "Set up this register before signing in with a PIN.",
+    "register_invalid": "This register is no longer available. Ask the owner to set it up again.",
+    "register_locked": "Too many wrong PINs. Wait five minutes and try again.",
+    "membership_locked": "Too many wrong PINs for this staff member. Wait five minutes."
   },
   "shell": {
     "product": "TrilloPOS",
@@ -342,7 +349,7 @@
     "copy": "Copy",
     "copied": "Copied",
     "done": "Done",
-    "added": "Staff member added. Give them this invite code.",
+    "added": "Staff member added. Give them this code and ask them to choose “Join a shop as staff” on the sign-in page.",
     "setPinFor": "Set {name}'s PIN",
     "newPinHint": "6 digits. Setting it also clears any register lockout.",
     "roleHint": {
@@ -350,7 +357,10 @@
       "STOCK_MANAGER": "Sells, and manages products, stock, suppliers, expenses and reports.",
       "CASHIER": "Sells and takes payments. Cannot change products or see profit.",
       "PACKER": "Can look things up, but cannot sell or change anything."
-    }
+    },
+    "location": "Location",
+    "allLocations": "All locations",
+    "pinAdded": "Staff member added. They can now select their name and use their PIN on a register."
   },
   "settings": {
     "title": "Business settings",
@@ -1111,5 +1121,40 @@
     "stationery": "Stationery & books",
     "toys": "Toys & baby",
     "sports": "Sports"
+  },
+  "staffAccess": {
+    "joinTitle": "Join a shop as staff",
+    "joinHint": "Use the invite code from your shop owner. You do not need to create a business.",
+    "inviteCode": "Invite code",
+    "name": "Your name",
+    "phone": "Phone",
+    "password": "Password",
+    "join": "Join shop",
+    "signedInHint": "This invitation will be added to your signed-in account.",
+    "existingAccount": "I already have an account",
+    "newAccount": "Create my staff account",
+    "backToLogin": "Back to sign in",
+    "registerTitle": "Staff PIN sign-in",
+    "registerHint": "On a shared shop device, choose your name and enter your 6-digit PIN.",
+    "staffName": "Staff name",
+    "chooseName": "Choose your name",
+    "pin": "6-digit PIN",
+    "signIn": "Sign in",
+    "noPinStaff": "No staff PINs are ready for this register. Ask the owner to add staff with a PIN, or set a PIN for an active staff member.",
+    "setupHint": "Ask the owner to set up this device in Settings → Registers, or enter the register setup code they gave you.",
+    "setupCode": "Register setup code",
+    "setup": "Set up this device",
+    "forgetDevice": "Forget this register on this device",
+    "phoneLogin": "Sign in with phone and password",
+    "useThisDevice": "Use this device as the register",
+    "joinAnother": "Join another shop",
+    "switchStaff": "Switch staff / lock register",
+    "notAllowed": "This page is not available for your role.",
+    "myWork": "Go to my work",
+    "welcome": "Hello, {name}",
+    "packerHint": "Look up products, sizes and available stock. Your access is read-only.",
+    "cashierHint": "Start a sale, take payments and help customers.",
+    "browseProducts": "Browse products",
+    "startSale": "Start a sale"
   }
 }

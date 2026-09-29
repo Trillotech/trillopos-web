@@ -1,4 +1,4 @@
-import { api, clearTokens, withAccess } from "@/lib/backend";
+import { api, clearTokens, tokenKind, withAccess } from "@/lib/backend";
 
 /**
  * Renews an expired session where cookie writes are allowed. The console layout cannot write
@@ -6,7 +6,11 @@ import { api, clearTokens, withAccess } from "@/lib/backend";
  * No redirect: behind the proxy, request.url is the container's own address, not the public one.
  */
 export async function POST() {
-  const session = await withAccess((token) => api(token).GET("/auth/memberships"));
+  // Choose again after renewal: an expired access cookie may already be gone.
+  const session = await withAccess(async (token) => {
+    const result = await api(token).GET(tokenKind(token) === "PICKER" ? "/auth/memberships" : "/session");
+    return { response: result.response };
+  });
   if (session.response.ok) {
     return new Response(null, { status: 204 });
   }

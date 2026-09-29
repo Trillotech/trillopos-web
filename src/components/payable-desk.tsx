@@ -41,7 +41,7 @@ export function PayableDesk({ initialId }: { initialId?: string }) {
   const t = useTranslations("payables");
   const errors = useTranslations("errors");
   const codes = useCodes();
-  const { owner, role, ready } = useMembershipRole();
+  const { owner, role, ready, locationId: scope } = useMembershipRole();
   const [rows, setRows] = useState<Row[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -82,7 +82,8 @@ export function PayableDesk({ initialId }: { initialId?: string }) {
       return;
     }
     void readJson<Supplier[]>("/api/catalog/suppliers").then(setSuppliers);
-    void readJson<Location[]>("/api/org/locations").then((found) => {
+    void readJson<Location[]>("/api/org/locations").then((all) => {
+      const found = scope ? all.filter(row => row.id === scope) : all;
       setLocations(found);
       if (found[0]?.id) {
         setLocationId(found[0].id);
