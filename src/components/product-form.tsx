@@ -10,9 +10,17 @@ import { useRouter } from "@/i18n/navigation";
 import type { Schemas } from "@/lib/backend";
 import { useCodes } from "@/lib/codes";
 import { formatAmount, marginPercent, profitPerUnit } from "@/lib/money";
+import {
+  categorySizing,
+  loadCategoryLibrary,
+  readyChoice,
+  resolveCategory,
+  unusedTemplates,
+  type CategoryChoice,
+  type CategoryTemplate,
+} from "@/lib/categories";
 import { ApiError, readJson } from "@/lib/read-json";
 import {
-  chartChoice,
   choiceChart,
   loadSizeCharts,
   resolveChart,
@@ -32,11 +40,14 @@ export function ProductForm({ productId }: { productId?: string }) {
   const errors = useTranslations("errors");
   const common = useTranslations("common");
   const names = useTranslations("sizeLibrary");
+  const readyNames = useTranslations("categoryLibrary");
+  const categoryText = useTranslations("categories");
   const codes = useCodes();
   const router = useRouter();
   const editing = Boolean(productId);
   const sizePickerId = useId();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [templates, setTemplates] = useState<CategoryTemplate[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [charts, setCharts] = useState<SizeChart[]>([]);
   const [library, setLibrary] = useState<SizeChartTemplate[]>([]);
@@ -44,7 +55,8 @@ export function ProductForm({ productId }: { productId?: string }) {
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
   const [barcode, setBarcode] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  // a category's id, or "ready:<key>" for a ready-made one made the shop's own on save
+  const [categoryId, setCategoryId] = useState<CategoryChoice>("");
   const [unit, setUnit] = useState<Schemas["ProductWrite"]["unit"]>("PIECE");
   const [sizeLabel, setSizeLabel] = useState("");
   // editing a size: the same size in other systems, "UK 8 · US M 9"
@@ -76,8 +88,10 @@ export function ProductForm({ productId }: { productId?: string }) {
       readJson<Schemas["OrganizationView"]>("/api/catalog/organization"),
       // sizes are chosen when adding; an existing size is edited as the product it is
       productId ? Promise.resolve<[SizeChart[], SizeChartTemplate[]]>([[], []]) : loadSizeCharts(),
-    ]).then(([nextCategories, nextLocations, organization, [nextCharts, nextLibrary]]) => {
+      loadCategoryLibrary(),
+    ]).then(([nextCategories, nextLocations, organization, [nextCharts, nextLibrary], nextTemplates]) => {
       setCategories(nextCategories);
+      setTemplates(nextTemplates);
       setLocations(nextLocations.filter((row) => row.active !== false));
       setCharts(nextCharts);
       setLibrary(nextLibrary);
@@ -120,20 +134,26 @@ export function ProductForm({ productId }: { productId?: string }) {
   const labels = sizeLabels(sizeChart);
   const picked = labels.filter((label) => label in sizes);
   const [labelSystem, ...otherSystems] = sizeChart?.systems ?? [];
+  // the sizes the category comes with: under Footwear, the shoe table and only footwear tables
+  const sizing = categorySizing(categoryId, categories, templates, charts);
+  const readyName = (template: CategoryTemplate) =>
+    template.key && readyNames.has(template.key) ? readyNames(template.key) : (template.name ?? "");
+  const ready = unusedTemplates(templates, categories, readyName);
 
   function pickChart(choice: ChartChoice) {
     setChart(choice);
     setSizes({});
   }
 
-  /** A category with a size chart (or under one that has it) opens its sizes. */
-  function pickCategory(id: string) {
-    setCategoryId(id);
-    const category = categories.find((row) => row.id === id);
-    const parent = categories.find((row) => row.id === category?.parentId);
-    const sizeChartId = category?.sizeChartId ?? parent?.sizeChartId;
-    if (!editing && sizeChartId && charts.some((row) => row.id === sizeChartId)) {
-      pickChart(chartChoice({ id: sizeChartId }));
+  /**
+   * A category opens its sizes: its own table, its parent's, or the one its ready-made kind brings.
+   * One that says nothing about sizes (a category of the shop's own without a table) leaves the choice.
+   */
+  function pickCategory(choice: CategoryChoice) {
+    setCategoryId(choice);
+    const next = categorySizing(choice, categories, templates, charts);
+    if (!editing && (next.none || next.choice || next.kind)) {
+      pickChart(next.choice);
     }
   }
 
@@ -155,79 +175,40 @@ export function ProductForm({ productId }: { productId?: string }) {
     setPending(false);
   }
 
-  async function saveSizes() {
-    if (picked.length === 0) {
-      setError(t("sizesRequired"));
-      return;
+  /** The sizes of one model, one product each. */
+  async function saveSizes(category: string | undefined, stocked: boolean) {
+    const saved = await resolveChart(chart, charts, (key) => libraryName(names, { key }));
+    if (!saved?.id) {
+      throw new ApiError("size_chart_not_found");
     }
-    const stocked = picked.some((label) => Number(sizes[label] || 0) > 0);
-    if (stocked && !locationId) {
-      setError(t("locationRequired"));
-      return;
-    }
-    if (stocked && !openingCost) {
-      setError(t("costRequired"));
-      return;
-    }
-    setPending(true);
-    try {
-      const saved = await resolveChart(chart, charts, (key) => libraryName(names, { key }));
-      if (!saved?.id) {
-        throw new ApiError("size_chart_not_found");
-      }
-      const created = await readJson<Schemas["ProductView"][]>("/api/catalog/products/sizes", {
-        method: "POST",
-        body: JSON.stringify({
-          name,
-          categoryId: categoryId || undefined,
-          unit,
-          retailPrice,
-          wholesalePrice: wholesalePrice || undefined,
-          trackInventory,
-          reorderPoint: Number(reorderPoint || 0),
-          sellInPos,
-          sellOnline,
-          taxable,
-          active,
-          sizeChartId: saved.id,
-          locationId: stocked ? locationId : undefined,
-          unitCost: stocked ? openingCost : undefined,
-          sizes: picked.map((label) => ({ label, quantity: sizes[label] || undefined })),
-        }),
-      });
-      router.push(`/products?added=${encodeURIComponent(name.trim())}&sizes=${created.length}`);
-    } catch (caught) {
-      fail(caught);
-    }
+    const created = await readJson<Schemas["ProductView"][]>("/api/catalog/products/sizes", {
+      method: "POST",
+      body: JSON.stringify({
+        name,
+        categoryId: category,
+        unit,
+        retailPrice,
+        wholesalePrice: wholesalePrice || undefined,
+        trackInventory,
+        reorderPoint: Number(reorderPoint || 0),
+        sellInPos,
+        sellOnline,
+        taxable,
+        active,
+        sizeChartId: saved.id,
+        locationId: stocked ? locationId : undefined,
+        unitCost: stocked ? openingCost : undefined,
+        sizes: picked.map((label) => ({ label, quantity: sizes[label] || undefined })),
+      }),
+    });
+    router.push(`/products?added=${encodeURIComponent(name.trim())}&sizes=${created.length}`);
   }
 
-  async function save() {
-    setError(undefined);
-    if (!name.trim()) {
-      setError(t("nameRequired"));
-      return;
-    }
-    if (!editing && !retailPrice) {
-      setError(t("priceRequired"));
-      return;
-    }
-    if (sizeChart && !editing) {
-      await saveSizes();
-      return;
-    }
-    if (!editing && openingQty && !locationId) {
-      setError(t("locationRequired"));
-      return;
-    }
-    if (!editing && Number(openingQty || 0) > 0 && !openingCost) {
-      setError(t("costRequired"));
-      return;
-    }
-    setPending(true);
+  async function saveOne(category: string | undefined) {
     const body = {
       name,
       sku: sku || undefined,
-      categoryId: categoryId || undefined,
+      categoryId: category,
       unit,
       sizeLabel: sizeLabel || undefined,
       // an emptied box removes them; a product without sizes never sends the field
@@ -246,12 +227,48 @@ export function ProductForm({ productId }: { productId?: string }) {
           ? [{ locationId, quantity: openingQty, unitCost: openingCost || undefined }]
           : undefined,
     } as Schemas["ProductWrite"];
+    const saved = await readJson<Schemas["ProductView"]>(
+      editing ? `/api/catalog/products/${productId}` : "/api/catalog/products",
+      { method: editing ? "PATCH" : "POST", body: JSON.stringify(body) },
+    );
+    router.push(`/products/${saved.id}`);
+  }
+
+  async function save() {
+    setError(undefined);
+    if (!name.trim()) {
+      setError(t("nameRequired"));
+      return;
+    }
+    if (!editing && !retailPrice) {
+      setError(t("priceRequired"));
+      return;
+    }
+    const inSizesNow = Boolean(sizeChart) && !editing && !sizing.none;
+    const stocked = inSizesNow ? picked.some((label) => Number(sizes[label] || 0) > 0) : Number(openingQty || 0) > 0;
+    if (inSizesNow && picked.length === 0) {
+      setError(t("sizesRequired"));
+      return;
+    }
+    if (!editing && (stocked || (!inSizesNow && openingQty)) && !locationId) {
+      setError(t("locationRequired"));
+      return;
+    }
+    if (!editing && stocked && !openingCost) {
+      setError(t("costRequired"));
+      return;
+    }
+    setPending(true);
     try {
-      const saved = await readJson<Schemas["ProductView"]>(
-        editing ? `/api/catalog/products/${productId}` : "/api/catalog/products",
-        { method: editing ? "PATCH" : "POST", body: JSON.stringify(body) },
-      );
-      router.push(`/products/${saved.id}`);
+      const category = await resolveCategory(categoryId, templates, {
+        category: (key) => (readyNames.has(key) ? readyNames(key) : ""),
+        sizeChart: (key) => libraryName(names, { key }),
+      });
+      if (inSizesNow) {
+        await saveSizes(category, stocked);
+      } else {
+        await saveOne(category);
+      }
     } catch (caught) {
       fail(caught);
     }
@@ -261,7 +278,7 @@ export function ProductForm({ productId }: { productId?: string }) {
     return <PageLoading panels={3} />;
   }
 
-  const inSizes = Boolean(sizeChart) && !editing;
+  const inSizes = Boolean(sizeChart) && !editing && !sizing.none;
 
   return (
     <Page width="narrow">
@@ -292,11 +309,24 @@ export function ProductForm({ productId }: { productId?: string }) {
           )}
           <SelectField label={t("category")} onChange={(event) => pickCategory(event.target.value)} value={categoryId}>
             <option value="">{t("noCategory")}</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
+            {categories.length > 0 ? (
+              <optgroup label={categoryText("yours")}>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
+            {ready.length > 0 ? (
+              <optgroup label={categoryText("readyMade")}>
+                {ready.map((template) => (
+                  <option key={template.key} value={readyChoice(template)}>
+                    {readyName(template)}
+                  </option>
+                ))}
+              </optgroup>
+            ) : null}
           </SelectField>
           <SelectField label={t("unit")} onChange={(event) => setUnit(event.target.value as typeof unit)} value={unit}>
             {["PIECE", "BAG", "BOX", "KG", "LITRE", "PACK"].map((value) => (
@@ -318,11 +348,13 @@ export function ProductForm({ productId }: { productId?: string }) {
           ) : null}
         </div>
       </Panel>
-      {editing ? null : (
+      {editing || sizing.none ? null : (
         <Panel title={t("sizes")}>
           <div className="flex flex-col gap-4">
             <SizeChartSelect
               charts={charts}
+              allowed={sizing.allowed}
+              kind={sizing.kind}
               hint={
                 sizeChart
                   ? otherSystems.length > 0

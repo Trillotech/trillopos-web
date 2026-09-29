@@ -1108,6 +1108,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/categories/library": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["library_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/register/staff": {
         parameters: {
             query?: never;
@@ -1857,11 +1873,13 @@ export interface components {
             archived?: boolean;
         };
         CategoryCreate: {
-            name: string;
+            templateKey?: string;
+            name?: string;
             /** Format: uuid */
             parentId?: string;
             /** Format: uuid */
             sizeChartId?: string;
+            sizeChartName?: string;
         };
         CategoryView: {
             /** Format: uuid */
@@ -1871,6 +1889,7 @@ export interface components {
             parentId?: string;
             /** Format: uuid */
             sizeChartId?: string;
+            templateKey?: string;
         };
         SwitchRequest: {
             /** Format: uuid */
@@ -2135,6 +2154,14 @@ export interface components {
             quantity?: number;
             /** Format: int32 */
             reorderPoint?: number;
+        };
+        CategoryTemplateView: {
+            key?: string;
+            name?: string;
+            /** @enum {string} */
+            sizeKind?: "FOOTWEAR" | "CLOTHING" | "OTHER";
+            sizeTemplateKey?: string;
+            sizeTemplateKeys?: string[];
         };
         StaffEntry: {
             /** Format: uuid */
@@ -3379,8 +3406,8 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Created */
-            201: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -4251,6 +4278,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ExpenseView"];
+                };
+            };
+        };
+    };
+    library_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CategoryTemplateView"][];
                 };
             };
         };
