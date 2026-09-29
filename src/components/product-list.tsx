@@ -37,15 +37,25 @@ export function ProductList() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [balances, setBalances] = useState<Balance[]>([]);
   const [currency, setCurrency] = useState("");
-  const [query, setQuery] = useState("");
+  const params = useSearchParams();
+  // ?added=<model>&sizes=<n>: the sizes of a model were just saved; the list opens on them
+  const addedModel = params.get("added");
+  const addedSizes = Number(params.get("sizes") ?? 0);
+  const [query, setQuery] = useState(addedModel ?? "");
   const [categoryId, setCategoryId] = useState("");
   const [stock, setStock] = useState("active");
   const [error, setError] = useState<string>();
   const [loaded, setLoaded] = useState(false);
   const deletion = useTranslations("productDelete");
   // ?deleted=<name>: the product was deleted on its own page, which then came here
-  const deletedName = useSearchParams().get("deleted");
-  const [notice, setNotice] = useState(deletedName ? deletion("deleted", { name: deletedName }) : undefined);
+  const deletedName = params.get("deleted");
+  const [notice, setNotice] = useState(
+    deletedName
+      ? deletion("deleted", { name: deletedName })
+      : addedModel
+        ? t("sizesAdded", { count: addedSizes, name: addedModel })
+        : undefined,
+  );
 
   function removed(product: Product) {
     setProducts((current) => current.filter((row) => row.id !== product.id));

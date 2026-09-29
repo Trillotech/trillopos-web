@@ -199,6 +199,26 @@ export function Field({
   );
 }
 
+export function TextArea({
+  label,
+  hint,
+  className = "",
+  ...input
+}: { label: string; hint?: string } & React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const hintId = useId();
+  return (
+    <label className={`flex min-w-0 flex-col gap-2 text-sm ${className}`}>
+      <span className={labelText}>{label}</span>
+      <textarea aria-describedby={hint ? hintId : undefined} className={`${control} py-3`} rows={4} {...input} />
+      {hint ? (
+        <span className="text-xs text-slate" id={hintId}>
+          {hint}
+        </span>
+      ) : null}
+    </label>
+  );
+}
+
 /** A search box: the label is read aloud and shown as the placeholder. */
 export function SearchField({
   label,
