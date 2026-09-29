@@ -290,9 +290,11 @@
     "noMatchHint": "Try another word.",
     "inParent": "In {parent}",
     "productCount": "{count, plural, one {# product} other {# products}}",
-    "parentHint": "Leave it as None for a top-level category.",
+    "parentHint": "Leave it as None for a top-level category. A ready-made one like Footwear brings its sizes: EU, UK, US and cm.",
     "renameTitle": "Edit category",
-    "save": "Save"
+    "save": "Save",
+    "yours": "Your categories",
+    "readyMade": "Ready-made"
   },
   "suppliers": {
     "title": "Suppliers",
@@ -1076,7 +1078,8 @@
     "addSystem": "Add a system",
     "removeRow": "Remove size {size}",
     "removeSystem": "Remove {system}",
-    "brandHint": "When a box label says otherwise, the box is right: change the table here, or the sizes on that one product."
+    "brandHint": "When a box label says otherwise, the box is right: change the table here, or the sizes on that one product.",
+    "noSizesFor": "{category} has no sizes."
   },
   "sizeLibrary": {
     "shoes": "Shoes · EU sizes",
@@ -1089,5 +1092,24 @@
     "shirts": "Shirts · collar",
     "bras": "Bras",
     "one_size": "One size"
+  },
+  "categoryLibrary": {
+    "footwear": "Footwear",
+    "womens_clothing": "Women’s clothing",
+    "mens_clothing": "Men’s clothing",
+    "kids_clothing": "Kids’ clothing",
+    "bags": "Bags",
+    "accessories": "Accessories",
+    "jewellery": "Jewellery & watches",
+    "beauty": "Beauty & personal care",
+    "health": "Health & medicine",
+    "phones": "Phones & accessories",
+    "electronics": "Electronics",
+    "food": "Food",
+    "drinks": "Drinks",
+    "household": "Household",
+    "stationery": "Stationery & books",
+    "toys": "Toys & baby",
+    "sports": "Sports"
   }
 }

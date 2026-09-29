@@ -54,22 +54,35 @@ test("adding sneakers in sizes: each size is its own product and knows its size 
   expect([stock("8.5"), stock("9"), stock("10")]).toEqual([1, 2, 0]);
 });
 
-test("a category with a size chart opens Add product on its sizes, every system beside them", async ({ page }) => {
-  const category = `E2E Footwear ${Date.now()}`;
+test("a category under Footwear gets the shoe sizes by itself, and only footwear tables", async ({ page }) => {
+  const category = `E2E Sneakers ${Date.now()}`;
   await page.goto("/en/categories");
   await page.getByRole("button", { name: "Add category" }).first().click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Name", { exact: true }).fill(category);
-  await dialog.getByLabel("Size chart").selectOption({ label: "Shoes · EU sizes" });
+  await dialog.getByLabel("Parent").selectOption({ label: "Footwear" });
+  // the shoe table is chosen by itself; clothes, bras and the rest are not offered
+  const tables = dialog.getByLabel("Size chart");
+  await expect(tables.locator("option:checked")).toHaveText("Shoes · EU sizes");
+  await expect(tables.locator("option", { hasText: "Sneakers · US sizes" })).toHaveCount(1);
+  await expect(tables.locator("option", { hasText: "Kids’ shoes" })).toHaveCount(1);
+  for (const other of ["Women’s clothes", "Men’s clothes", "Kids’ clothes", "Bras", "Trousers · waist", "One size"]) {
+    await expect(tables.locator("option", { hasText: other })).toHaveCount(0);
+  }
   await dialog.getByRole("button", { name: "Add category" }).click();
-  await expect(page.getByRole("button", { name: new RegExp(category) })).toContainText("Sizes: Shoes · EU sizes");
+  // Footwear became the shop's own, with the new category in it
+  const row = page.getByRole("button", { name: new RegExp(category) });
+  await expect(row).toContainText("In Footwear");
+  await expect(row).toContainText("Sizes: Shoes · EU sizes");
+  await expect(page.getByRole("button", { name: /^Footwear/ })).toContainText("Sizes: Shoes · EU sizes");
 
   const model = `E2E Sandal ${Date.now()}`;
   await page.goto("/en/products/new");
   await page.getByLabel("Product name").fill(model);
   await page.getByLabel("Category").selectOption({ label: category });
-  // the category's chart is chosen by itself, sizes ready to tap
+  // the category's table is chosen by itself, sizes ready to tap, and still only footwear tables
   await expect(page.getByLabel("Size chart").locator("option:checked")).toHaveText("Shoes · EU sizes");
+  await expect(page.getByLabel("Size chart").locator("option", { hasText: "Women’s clothes" })).toHaveCount(0);
   await expect(page.getByText("Named by EU, with UK · US M · US W · CM beside each size.")).toBeVisible();
   await page.getByRole("button", { name: "All", exact: true }).click();
   await expect(page.getByRole("button", { name: "Save 14 sizes" })).toBeVisible();
@@ -82,6 +95,46 @@ test("a category with a size chart opens Add product on its sizes, every system 
   await page.getByRole("button", { name: "Save 2 sizes" }).click();
   await expect(page.getByText(`Saved 2 sizes of ${model}.`)).toBeVisible();
   await expect(page.getByText(`${model} · EU 40`, { exact: true }).filter({ visible: true })).toBeVisible();
+});
+
+test("a ready-made category picked in Add product brings its sizes and becomes the shop's own", async ({ page, api }) => {
+  const model = `E2E Polo ${Date.now()}`;
+  await page.goto("/en/products/new");
+  await page.getByLabel("Product name").fill(model);
+  await page.getByLabel("Category").selectOption({ label: "Men’s clothing" });
+  await expect(page.getByLabel("Size chart").locator("option:checked")).toHaveText("Men’s clothes");
+  // men’s clothing offers its own tables: not shoes, not women’s or kids’ clothes
+  for (const other of ["Shoes · EU sizes", "Women’s clothes", "Kids’ clothes", "Bras"]) {
+    await expect(page.getByLabel("Size chart").locator("option", { hasText: other })).toHaveCount(0);
+  }
+  await expect(page.getByLabel("Size chart").locator("option", { hasText: "Shirts · collar" })).toHaveCount(1);
+  await page.getByRole("button", { name: "M", exact: true }).click();
+  await expect(page.getByText("EU 48-50 · US/UK 38-40", { exact: true })).toBeVisible();
+  await page.getByLabel("Retail price").fill("32000");
+  await page.getByRole("button", { name: "Save 1 size" }).click();
+  await expect(page.getByText(`Saved 1 size of ${model}.`)).toBeVisible();
+  await expect(page.getByText(`${model} · M`, { exact: true }).filter({ visible: true })).toBeVisible();
+
+  const categories = (await (await api.get("/api/catalog/categories")).json()) as { name: string; templateKey?: string }[];
+  expect(categories.filter((row) => row.templateKey === "mens_clothing").map((row) => row.name)).toEqual(["Men’s clothing"]);
+});
+
+test("a category of goods without sizes offers no size table", async ({ page }) => {
+  const category = `E2E Soft drinks ${Date.now()}`;
+  await page.goto("/en/categories");
+  await page.getByRole("button", { name: "Add category" }).first().click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Name", { exact: true }).fill(category);
+  await dialog.getByLabel("Parent").selectOption({ label: "Drinks" });
+  await expect(dialog.getByText("Drinks has no sizes.")).toBeVisible();
+  await expect(dialog.getByLabel("Size chart")).toHaveCount(0);
+  await dialog.getByRole("button", { name: "Add category" }).click();
+  await expect(page.getByRole("button", { name: new RegExp(category) })).toContainText("In Drinks");
+
+  await page.goto("/en/products/new");
+  await page.getByLabel("Category").selectOption({ label: category });
+  await expect(page.getByRole("heading", { name: "Sizes", exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Size label")).toBeVisible();
 });
 
 test("size charts: label by another system, drop a size, make your own table, delete it", async ({ page }) => {

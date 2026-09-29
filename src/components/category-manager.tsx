@@ -20,10 +20,20 @@ import {
   SelectField,
 } from "@/components/ui";
 import type { Schemas } from "@/lib/backend";
+import {
+  categorySizing,
+  loadCategoryLibrary,
+  readyChoice,
+  resolveCategory,
+  unusedTemplates,
+  type Category,
+  type CategoryChoice,
+  type CategoryTemplate,
+  type Sizing,
+} from "@/lib/categories";
 import { messageFor, readJson } from "@/lib/read-json";
 import { chartChoice, loadSizeCharts, resolveChart, type ChartChoice, type SizeChart, type SizeChartTemplate } from "@/lib/size-charts";
 
-type Category = Schemas["CategoryView"];
 type Product = Schemas["ProductView"];
 
 function fetchAll() {
@@ -31,6 +41,7 @@ function fetchAll() {
     readJson<Category[]>("/api/catalog/categories"),
     readJson<Product[]>("/api/catalog/products"),
     loadSizeCharts(),
+    loadCategoryLibrary(),
   ]);
 }
 
@@ -38,14 +49,16 @@ export function CategoryManager() {
   const t = useTranslations("categories");
   const sizes = useTranslations("sizeCharts");
   const names = useTranslations("sizeLibrary");
+  const readyNames = useTranslations("categoryLibrary");
   const errors = useTranslations("errors");
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [charts, setCharts] = useState<SizeChart[]>([]);
   const [library, setLibrary] = useState<SizeChartTemplate[]>([]);
+  const [templates, setTemplates] = useState<CategoryTemplate[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [name, setName] = useState("");
-  const [parentId, setParentId] = useState("");
+  const [parent, setParent] = useState<CategoryChoice>("");
   const [chart, setChart] = useState<ChartChoice>("");
   const [query, setQuery] = useState("");
   const [adding, setAdding] = useState(false);
@@ -56,11 +69,12 @@ export function CategoryManager() {
   const [formError, setFormError] = useState<string>();
   const [busy, setBusy] = useState<"add" | "rename">();
 
-  function show([nextCategories, nextProducts, [nextCharts, nextLibrary]]: Awaited<ReturnType<typeof fetchAll>>) {
+  function show([nextCategories, nextProducts, [nextCharts, nextLibrary], nextTemplates]: Awaited<ReturnType<typeof fetchAll>>) {
     setCategories(nextCategories);
     setProducts(nextProducts);
     setCharts(nextCharts);
     setLibrary(nextLibrary);
+    setTemplates(nextTemplates);
   }
 
   async function load() {
@@ -80,6 +94,11 @@ export function CategoryManager() {
     return categories.filter((category) => !needle || (category.name ?? "").toLowerCase().includes(needle));
   }, [categories, query]);
 
+  const readyName = (template: CategoryTemplate) =>
+    template.key && readyNames.has(template.key) ? readyNames(template.key) : (template.name ?? "");
+  const ready = unusedTemplates(templates, categories, readyName);
+  const sizingOf = (choice: CategoryChoice): Sizing => categorySizing(choice, categories, templates, charts);
+
   function fail(caught: unknown) {
     setFormError(messageFor(caught, errors, (code) => errors.has(code)));
   }
@@ -89,17 +108,27 @@ export function CategoryManager() {
     return (await resolveChart(choice, charts, (key) => libraryName(names, { key })))?.id;
   }
 
+  /** A new category takes its parent's sizes: Footwear's shoe table, and only footwear tables. */
+  function pickParent(choice: CategoryChoice) {
+    setParent(choice);
+    setChart(choice ? sizingOf(choice).choice : "");
+  }
+
   async function add(event: React.FormEvent) {
     event.preventDefault();
     setFormError(undefined);
     setBusy("add");
     try {
+      const parentId = await resolveCategory(parent, templates, {
+        category: (key) => (readyNames.has(key) ? readyNames(key) : ""),
+        sizeChart: (key) => libraryName(names, { key }),
+      });
       await readJson("/api/catalog/categories", {
         method: "POST",
-        body: JSON.stringify({ name, parentId: parentId || undefined, sizeChartId: await chartId(chart) }),
+        body: JSON.stringify({ name, parentId, sizeChartId: await chartId(chart) }),
       });
       setName("");
-      setParentId("");
+      setParent("");
       setChart("");
       setAdding(false);
       await load();
@@ -145,6 +174,7 @@ export function CategoryManager() {
     <Button
       onClick={() => {
         setFormError(undefined);
+        setParent("");
         setChart("");
         setAdding(true);
       }}
@@ -155,17 +185,36 @@ export function CategoryManager() {
       {t("add")}
     </Button>
   );
-  const chartSelect = (
-    <SizeChartSelect
-      charts={charts}
-      hint={sizes("categoryHint")}
-      label={sizes("chart")}
-      library={library}
-      noneLabel={sizes("noChart")}
-      onChange={setChart}
-      value={chart}
-    />
-  );
+
+  // the sizes that fit: a new category takes its parent's; an existing one its parent's, or its own ready-made kind
+  const addSizing: Sizing = parent ? sizingOf(parent) : { choice: "" };
+  const editSizing: Sizing = !renaming
+    ? { choice: "" }
+    : renaming.parentId
+      ? sizingOf(renaming.parentId)
+      : renaming.templateKey
+        ? sizingOf(renaming.id ?? "")
+        : { choice: "" };
+  const chartSelect = (sizing: Sizing, owner: string) =>
+    sizing.none ? (
+      <p className="text-sm text-slate">{sizes("noSizesFor", { category: owner })}</p>
+    ) : (
+      <SizeChartSelect
+        charts={charts}
+        hint={sizes("categoryHint")}
+        allowed={sizing.allowed}
+        kind={sizing.kind}
+        label={sizes("chart")}
+        library={library}
+        noneLabel={sizes("noChart")}
+        onChange={setChart}
+        value={chart}
+      />
+    );
+  const parentLabel = (choice: CategoryChoice) =>
+    choice.startsWith("ready:")
+      ? readyName(templates.find((template) => readyChoice(template) === choice) ?? {})
+      : (categories.find((category) => category.id === choice)?.name ?? "");
 
   return (
     <Page>
@@ -214,18 +263,33 @@ export function CategoryManager() {
       <Modal onClose={() => setAdding(false)} open={adding} title={t("create")}>
         <form className="flex flex-col gap-4" onSubmit={(event) => void add(event)}>
           <Field label={t("name")} onChange={(event) => setName(event.target.value)} required value={name} />
-          <SelectField label={t("parent")} onChange={(event) => setParentId(event.target.value)} value={parentId}>
-            <option value="">{t("noParent")}</option>
-            {categories
-              .filter((category) => !category.parentId)
-              .map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-          </SelectField>
-          <p className="text-xs text-slate">{t("parentHint")}</p>
-          {chartSelect}
+          <div className="flex flex-col gap-2">
+            <SelectField label={t("parent")} onChange={(event) => pickParent(event.target.value)} value={parent}>
+              <option value="">{t("noParent")}</option>
+              {categories.some((category) => !category.parentId) ? (
+                <optgroup label={t("yours")}>
+                  {categories
+                    .filter((category) => !category.parentId)
+                    .map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                </optgroup>
+              ) : null}
+              {ready.length > 0 ? (
+                <optgroup label={t("readyMade")}>
+                  {ready.map((template) => (
+                    <option key={template.key} value={readyChoice(template)}>
+                      {readyName(template)}
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null}
+            </SelectField>
+            <p className="text-xs text-slate">{t("parentHint")}</p>
+          </div>
+          {chartSelect(addSizing, parentLabel(parent))}
           {formError ? <Alert>{formError}</Alert> : null}
           <Button busy={busy === "add"} className="self-start" disabled={!name} type="submit">
             {t("add")}
@@ -236,7 +300,7 @@ export function CategoryManager() {
       <Modal onClose={() => setRenaming(undefined)} open={renaming !== undefined} title={t("renameTitle")}>
         <form className="flex flex-col gap-4" onSubmit={(event) => void rename(event)}>
           <Field label={t("rename")} onChange={(event) => setNewName(event.target.value)} required value={newName} />
-          {chartSelect}
+          {chartSelect(editSizing, renaming?.parentId ? parentLabel(renaming.parentId) : (renaming?.name ?? ""))}
           {renaming ? <p className="text-sm text-slate">{t("productCount", { count: count(renaming) })}</p> : null}
           {formError ? <Alert>{formError}</Alert> : null}
           <Button busy={busy === "rename"} className="self-start" disabled={!newName.trim()} type="submit">
