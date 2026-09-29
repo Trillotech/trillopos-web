@@ -132,6 +132,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/size-charts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["list_1"];
+        put?: never;
+        post: operations["create_2"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/shifts": {
         parameters: {
             query?: never;
@@ -171,7 +187,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_1"];
+        get: operations["list_2"];
         put?: never;
         post: operations["saveCart"];
         delete?: never;
@@ -253,7 +269,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        post: operations["create_2"];
+        post: operations["create_3"];
         delete?: never;
         options?: never;
         head?: never;
@@ -267,7 +283,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_2"];
+        get: operations["list_3"];
         put?: never;
         post: operations["bind"];
         delete?: never;
@@ -299,7 +315,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_3"];
+        get: operations["list_4"];
         put?: never;
         post: operations["createManual"];
         delete?: never;
@@ -347,9 +363,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_4"];
+        get: operations["list_5"];
         put?: never;
-        post: operations["create_3"];
+        post: operations["create_4"];
         delete?: never;
         options?: never;
         head?: never;
@@ -372,6 +388,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/products/sizes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createSizes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/payables": {
         parameters: {
             query?: never;
@@ -379,7 +411,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_5"];
+        get: operations["list_6"];
         put?: never;
         post: operations["createManual_1"];
         delete?: never;
@@ -411,7 +443,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_6"];
+        get: operations["list_7"];
         put?: never;
         post: operations["invite"];
         delete?: never;
@@ -427,9 +459,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_7"];
+        get: operations["list_8"];
         put?: never;
-        post: operations["create_4"];
+        post: operations["create_5"];
         delete?: never;
         options?: never;
         head?: never;
@@ -459,7 +491,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_8"];
+        get: operations["list_9"];
         put?: never;
         post: operations["record"];
         delete?: never;
@@ -523,9 +555,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_9"];
+        get: operations["list_10"];
         put?: never;
-        post: operations["create_5"];
+        post: operations["create_6"];
         delete?: never;
         options?: never;
         head?: never;
@@ -555,9 +587,9 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get: operations["list_10"];
+        get: operations["list_11"];
         put?: never;
-        post: operations["create_6"];
+        post: operations["create_7"];
         delete?: never;
         options?: never;
         head?: never;
@@ -724,6 +756,22 @@ export interface paths {
         patch: operations["update"];
         trace?: never;
     };
+    "/size-charts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["archive_1"];
+        options?: never;
+        head?: never;
+        patch: operations["update_1"];
+        trace?: never;
+    };
     "/products/{id}": {
         parameters: {
             query?: never;
@@ -734,10 +782,10 @@ export interface paths {
         get: operations["get_2"];
         put?: never;
         post?: never;
-        delete: operations["archive_1"];
+        delete: operations["archive_2"];
         options?: never;
         head?: never;
-        patch: operations["update_1"];
+        patch: operations["update_2"];
         trace?: never;
     };
     "/organization": {
@@ -753,7 +801,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["update_2"];
+        patch: operations["update_3"];
         trace?: never;
     };
     "/memberships/{id}": {
@@ -785,7 +833,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["update_3"];
+        patch: operations["update_4"];
         trace?: never;
     };
     "/customers/{id}": {
@@ -801,7 +849,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["update_4"];
+        patch: operations["update_5"];
         trace?: never;
     };
     "/categories/{id}": {
@@ -817,7 +865,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch: operations["update_5"];
+        patch: operations["update_6"];
         trace?: never;
     };
     "/stock-movements": {
@@ -844,6 +892,22 @@ export interface paths {
             cookie?: never;
         };
         get: operations["balances"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/size-charts/library": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["library"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1283,6 +1347,24 @@ export interface components {
             /** Format: int32 */
             paymentTermsDays?: number;
         };
+        SizeChartCreate: {
+            templateKey?: string;
+            name?: string;
+            shortName?: string;
+            /** @enum {string} */
+            kind?: "FOOTWEAR" | "CLOTHING" | "OTHER";
+            labels?: string[];
+        };
+        SizeChartView: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            shortName?: string;
+            /** @enum {string} */
+            kind?: "FOOTWEAR" | "CLOTHING" | "OTHER";
+            templateKey?: string;
+            labels?: string[];
+        };
         OpenRequest: {
             /** Format: uuid */
             locationId: string;
@@ -1530,6 +1612,8 @@ export interface components {
             unit?: "PIECE" | "BAG" | "BOX" | "KG" | "LITRE" | "PACK";
             sizeLabel?: string;
             productGroupKey?: string;
+            /** Format: uuid */
+            sizeChartId?: string;
             retailPrice?: number;
             wholesalePrice?: number;
             taxable?: boolean;
@@ -1543,6 +1627,34 @@ export interface components {
         };
         BarcodeWrite: {
             barcode: string;
+        };
+        SizeWrite: {
+            label: string;
+            quantity?: number;
+        };
+        SizesWrite: {
+            name: string;
+            /** Format: uuid */
+            categoryId?: string;
+            /** Format: uuid */
+            defaultSupplierId?: string;
+            /** @enum {string} */
+            unit: "PIECE" | "BAG" | "BOX" | "KG" | "LITRE" | "PACK";
+            retailPrice: number;
+            wholesalePrice?: number;
+            taxable?: boolean;
+            trackInventory?: boolean;
+            /** Format: int32 */
+            reorderPoint?: number;
+            sellInPos?: boolean;
+            sellOnline?: boolean;
+            active?: boolean;
+            /** Format: uuid */
+            sizeChartId: string;
+            /** Format: uuid */
+            locationId?: string;
+            unitCost?: number;
+            sizes: components["schemas"]["SizeWrite"][];
         };
         ManualPayableRequest: {
             /** Format: uuid */
@@ -1746,6 +1858,8 @@ export interface components {
             name: string;
             /** Format: uuid */
             parentId?: string;
+            /** Format: uuid */
+            sizeChartId?: string;
         };
         CategoryView: {
             /** Format: uuid */
@@ -1753,6 +1867,8 @@ export interface components {
             name?: string;
             /** Format: uuid */
             parentId?: string;
+            /** Format: uuid */
+            sizeChartId?: string;
         };
         SwitchRequest: {
             /** Format: uuid */
@@ -1813,6 +1929,13 @@ export interface components {
         AcceptCodeRequest: {
             code: string;
         };
+        SizeChartUpdate: {
+            name?: string;
+            shortName?: string;
+            /** @enum {string} */
+            kind?: "FOOTWEAR" | "CLOTHING" | "OTHER";
+            labels?: string[];
+        };
         OrganizationUpdate: {
             name?: string;
             /** @enum {string} */
@@ -1858,6 +1981,9 @@ export interface components {
         };
         CategoryUpdate: {
             name?: string;
+            /** Format: uuid */
+            sizeChartId?: string;
+            clearSizeChart?: boolean;
         };
         MovementView: {
             /** Format: uuid */
@@ -1907,6 +2033,14 @@ export interface components {
             averageCost?: number;
             /** Format: date-time */
             lastMovementAt?: string;
+        };
+        SizeChartTemplateView: {
+            key?: string;
+            /** @enum {string} */
+            kind?: "FOOTWEAR" | "CLOTHING" | "OTHER";
+            name?: string;
+            shortName?: string;
+            labels?: string[];
         };
         Drawer: {
             openingFloat?: number;
@@ -2297,6 +2431,50 @@ export interface operations {
             };
         };
     };
+    list_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SizeChartView"][];
+                };
+            };
+        };
+    };
+    create_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SizeChartCreate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SizeChartView"];
+                };
+            };
+        };
+    };
     open: {
         parameters: {
             query?: never;
@@ -2347,7 +2525,7 @@ export interface operations {
             };
         };
     };
-    list_1: {
+    list_2: {
         parameters: {
             query?: {
                 status?: ("DRAFT" | "HELD" | "COMPLETED" | "VOID" | "PARTIALLY_REFUNDED" | "REFUNDED")[];
@@ -2492,7 +2670,7 @@ export interface operations {
             };
         };
     };
-    create_2: {
+    create_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2516,7 +2694,7 @@ export interface operations {
             };
         };
     };
-    list_2: {
+    list_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -2582,7 +2760,7 @@ export interface operations {
             };
         };
     };
-    list_3: {
+    list_4: {
         parameters: {
             query?: {
                 customerId?: string;
@@ -2683,7 +2861,7 @@ export interface operations {
             };
         };
     };
-    list_4: {
+    list_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -2703,7 +2881,7 @@ export interface operations {
             };
         };
     };
-    create_3: {
+    create_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -2753,7 +2931,31 @@ export interface operations {
             };
         };
     };
-    list_5: {
+    createSizes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SizesWrite"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProductView"][];
+                };
+            };
+        };
+    };
+    list_6: {
         parameters: {
             query?: {
                 supplierId?: string;
@@ -2828,7 +3030,7 @@ export interface operations {
             };
         };
     };
-    list_6: {
+    list_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -2872,7 +3074,7 @@ export interface operations {
             };
         };
     };
-    list_7: {
+    list_8: {
         parameters: {
             query?: never;
             header?: never;
@@ -2892,7 +3094,7 @@ export interface operations {
             };
         };
     };
-    create_4: {
+    create_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -2936,7 +3138,7 @@ export interface operations {
             };
         };
     };
-    list_8: {
+    list_9: {
         parameters: {
             query?: {
                 locationId?: string;
@@ -3073,7 +3275,7 @@ export interface operations {
             };
         };
     };
-    list_9: {
+    list_10: {
         parameters: {
             query?: {
                 q?: string;
@@ -3096,7 +3298,7 @@ export interface operations {
             };
         };
     };
-    create_5: {
+    create_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -3142,7 +3344,7 @@ export interface operations {
             };
         };
     };
-    list_10: {
+    list_11: {
         parameters: {
             query?: never;
             header?: never;
@@ -3162,7 +3364,7 @@ export interface operations {
             };
         };
     };
-    create_6: {
+    create_7: {
         parameters: {
             query?: never;
             header?: never;
@@ -3426,6 +3628,52 @@ export interface operations {
             };
         };
     };
+    archive_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    update_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SizeChartUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SizeChartView"];
+                };
+            };
+        };
+    };
     get_2: {
         parameters: {
             query?: never;
@@ -3448,7 +3696,7 @@ export interface operations {
             };
         };
     };
-    archive_1: {
+    archive_2: {
         parameters: {
             query?: {
                 writeOffStock?: boolean;
@@ -3470,7 +3718,7 @@ export interface operations {
             };
         };
     };
-    update_1: {
+    update_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3516,7 +3764,7 @@ export interface operations {
             };
         };
     };
-    update_2: {
+    update_3: {
         parameters: {
             query?: never;
             header?: never;
@@ -3566,7 +3814,7 @@ export interface operations {
             };
         };
     };
-    update_3: {
+    update_4: {
         parameters: {
             query?: never;
             header?: never;
@@ -3614,7 +3862,7 @@ export interface operations {
             };
         };
     };
-    update_4: {
+    update_5: {
         parameters: {
             query?: never;
             header?: never;
@@ -3640,7 +3888,7 @@ export interface operations {
             };
         };
     };
-    update_5: {
+    update_6: {
         parameters: {
             query?: never;
             header?: never;
@@ -3709,6 +3957,26 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["BalanceView"][];
+                };
+            };
+        };
+    };
+    library: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SizeChartTemplateView"][];
                 };
             };
         };

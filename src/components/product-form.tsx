@@ -1,15 +1,26 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { useTranslations } from "next-intl";
 
 import { DeleteProduct } from "@/components/delete-product";
-import { Alert, Button, Checkbox, Field, Page, PageHeader, PageLoading, Panel, SelectField } from "@/components/ui";
+import { libraryName, SizeChartSelect } from "@/components/size-chart-select";
+import { Alert, Button, Checkbox, Field, focusRing, Page, PageHeader, PageLoading, Panel, SelectField } from "@/components/ui";
 import { useRouter } from "@/i18n/navigation";
 import type { Schemas } from "@/lib/backend";
 import { useCodes } from "@/lib/codes";
 import { formatAmount, marginPercent, profitPerUnit } from "@/lib/money";
-import { readJson } from "@/lib/read-json";
+import { ApiError, readJson } from "@/lib/read-json";
+import {
+  chartChoice,
+  choiceChart,
+  loadSizeCharts,
+  resolveChart,
+  sizeDisplay,
+  type ChartChoice,
+  type SizeChart,
+  type SizeChartTemplate,
+} from "@/lib/size-charts";
 
 type Category = Schemas["CategoryView"];
 type Location = Schemas["LocationView"];
@@ -18,11 +29,15 @@ export function ProductForm({ productId }: { productId?: string }) {
   const t = useTranslations("productForm");
   const errors = useTranslations("errors");
   const common = useTranslations("common");
+  const names = useTranslations("sizeLibrary");
   const codes = useCodes();
   const router = useRouter();
   const editing = Boolean(productId);
+  const sizePickerId = useId();
   const [categories, setCategories] = useState<Category[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [charts, setCharts] = useState<SizeChart[]>([]);
+  const [library, setLibrary] = useState<SizeChartTemplate[]>([]);
   const [currency, setCurrency] = useState("");
   const [name, setName] = useState("");
   const [sku, setSku] = useState("");
@@ -30,6 +45,9 @@ export function ProductForm({ productId }: { productId?: string }) {
   const [categoryId, setCategoryId] = useState("");
   const [unit, setUnit] = useState<Schemas["ProductWrite"]["unit"]>("PIECE");
   const [sizeLabel, setSizeLabel] = useState("");
+  // adding in sizes: the chart, and the sizes picked with their opening quantity ("" for none yet)
+  const [chart, setChart] = useState<ChartChoice>("");
+  const [sizes, setSizes] = useState<Record<string, string>>({});
   const [retailPrice, setRetailPrice] = useState("");
   const [wholesalePrice, setWholesalePrice] = useState("");
   const [openingCost, setOpeningCost] = useState("");
@@ -52,9 +70,13 @@ export function ProductForm({ productId }: { productId?: string }) {
       readJson<Category[]>("/api/catalog/categories"),
       readJson<Location[]>("/api/catalog/locations"),
       readJson<Schemas["OrganizationView"]>("/api/catalog/organization"),
-    ]).then(([nextCategories, nextLocations, organization]) => {
+      // sizes are chosen when adding; an existing size is edited as the product it is
+      productId ? Promise.resolve<[SizeChart[], SizeChartTemplate[]]>([[], []]) : loadSizeCharts(),
+    ]).then(([nextCategories, nextLocations, organization, [nextCharts, nextLibrary]]) => {
       setCategories(nextCategories);
       setLocations(nextLocations.filter((row) => row.active !== false));
+      setCharts(nextCharts);
+      setLibrary(nextLibrary);
       setCurrency(organization.currencyCode ?? "");
       // a new product in an online shop is sold online unless unticked
       if (!productId && organization.businessType === "ONLINE") {
@@ -89,6 +111,88 @@ export function ProductForm({ productId }: { productId?: string }) {
 
   const margin = marginPercent(retailPrice, openingCost);
   const profit = profitPerUnit(retailPrice, openingCost);
+  const sizeChart = choiceChart(chart, charts, library);
+  const picked = (sizeChart?.labels ?? []).filter((label) => label in sizes);
+
+  function pickChart(choice: ChartChoice) {
+    setChart(choice);
+    setSizes({});
+  }
+
+  /** A category with a size chart (or under one that has it) opens its sizes. */
+  function pickCategory(id: string) {
+    setCategoryId(id);
+    const category = categories.find((row) => row.id === id);
+    const parent = categories.find((row) => row.id === category?.parentId);
+    const sizeChartId = category?.sizeChartId ?? parent?.sizeChartId;
+    if (!editing && sizeChartId && charts.some((row) => row.id === sizeChartId)) {
+      pickChart(chartChoice({ id: sizeChartId }));
+    }
+  }
+
+  function toggleSize(label: string) {
+    setSizes((current) => {
+      const next = { ...current };
+      if (label in next) {
+        delete next[label];
+      } else {
+        next[label] = "";
+      }
+      return next;
+    });
+  }
+
+  function fail(caught: unknown) {
+    const code = caught instanceof Error ? caught.message : "unknown";
+    setError(errors.has(code) ? errors(code) : errors("unknown"));
+    setPending(false);
+  }
+
+  async function saveSizes() {
+    if (picked.length === 0) {
+      setError(t("sizesRequired"));
+      return;
+    }
+    const stocked = picked.some((label) => Number(sizes[label] || 0) > 0);
+    if (stocked && !locationId) {
+      setError(t("locationRequired"));
+      return;
+    }
+    if (stocked && !openingCost) {
+      setError(t("costRequired"));
+      return;
+    }
+    setPending(true);
+    try {
+      const saved = await resolveChart(chart, charts, (key) => libraryName(names, { key }));
+      if (!saved?.id) {
+        throw new ApiError("size_chart_not_found");
+      }
+      const created = await readJson<Schemas["ProductView"][]>("/api/catalog/products/sizes", {
+        method: "POST",
+        body: JSON.stringify({
+          name,
+          categoryId: categoryId || undefined,
+          unit,
+          retailPrice,
+          wholesalePrice: wholesalePrice || undefined,
+          trackInventory,
+          reorderPoint: Number(reorderPoint || 0),
+          sellInPos,
+          sellOnline,
+          taxable,
+          active,
+          sizeChartId: saved.id,
+          locationId: stocked ? locationId : undefined,
+          unitCost: stocked ? openingCost : undefined,
+          sizes: picked.map((label) => ({ label, quantity: sizes[label] || undefined })),
+        }),
+      });
+      router.push(`/products?added=${encodeURIComponent(name.trim())}&sizes=${created.length}`);
+    } catch (caught) {
+      fail(caught);
+    }
+  }
 
   async function save() {
     setError(undefined);
@@ -96,8 +200,20 @@ export function ProductForm({ productId }: { productId?: string }) {
       setError(t("nameRequired"));
       return;
     }
+    if (!editing && !retailPrice) {
+      setError(t("priceRequired"));
+      return;
+    }
+    if (sizeChart && !editing) {
+      await saveSizes();
+      return;
+    }
     if (!editing && openingQty && !locationId) {
       setError(t("locationRequired"));
+      return;
+    }
+    if (!editing && Number(openingQty || 0) > 0 && !openingCost) {
+      setError(t("costRequired"));
       return;
     }
     setPending(true);
@@ -128,15 +244,15 @@ export function ProductForm({ productId }: { productId?: string }) {
       );
       router.push(`/products/${saved.id}`);
     } catch (caught) {
-      const code = caught instanceof Error ? caught.message : "unknown";
-      setError(errors.has(code) ? errors(code) : errors("unknown"));
-      setPending(false);
+      fail(caught);
     }
   }
 
   if (!loaded) {
     return <PageLoading panels={3} />;
   }
+
+  const inSizes = Boolean(sizeChart) && !editing;
 
   return (
     <Page width="narrow">
@@ -151,10 +267,21 @@ export function ProductForm({ productId }: { productId?: string }) {
       ) : null}
       <Panel title={t("basics")}>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field className="sm:col-span-2" label={t("name")} onChange={(event) => setName(event.target.value)} required value={name} />
-          <Field label={t("sku")} onChange={(event) => setSku(event.target.value)} value={sku} />
-          <Field label={t("barcode")} onChange={(event) => setBarcode(event.target.value)} value={barcode} />
-          <SelectField label={t("category")} onChange={(event) => setCategoryId(event.target.value)} value={categoryId}>
+          <Field
+            className="sm:col-span-2"
+            hint={inSizes ? t("modelHint") : undefined}
+            label={t("name")}
+            onChange={(event) => setName(event.target.value)}
+            required
+            value={name}
+          />
+          {inSizes ? null : (
+            <>
+              <Field label={t("sku")} onChange={(event) => setSku(event.target.value)} value={sku} />
+              <Field label={t("barcode")} onChange={(event) => setBarcode(event.target.value)} value={barcode} />
+            </>
+          )}
+          <SelectField label={t("category")} onChange={(event) => pickCategory(event.target.value)} value={categoryId}>
             <option value="">{t("noCategory")}</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
@@ -169,9 +296,84 @@ export function ProductForm({ productId }: { productId?: string }) {
               </option>
             ))}
           </SelectField>
-          <Field label={t("size")} onChange={(event) => setSizeLabel(event.target.value)} value={sizeLabel} />
+          {inSizes ? null : <Field label={t("size")} onChange={(event) => setSizeLabel(event.target.value)} value={sizeLabel} />}
         </div>
       </Panel>
+      {editing ? null : (
+        <Panel title={t("sizes")}>
+          <div className="flex flex-col gap-4">
+            <SizeChartSelect
+              charts={charts}
+              hint={sizeChart ? t("sizesSkuHint") : t("sizesHint")}
+              label={t("sizeChart")}
+              library={library}
+              noneLabel={t("oneProduct")}
+              onChange={pickChart}
+              value={chart}
+            />
+            {sizeChart ? (
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-ink" id={sizePickerId}>
+                    {t("pickSizes")}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button onClick={() => setSizes(Object.fromEntries((sizeChart.labels ?? []).map((label) => [label, sizes[label] ?? ""])))} type="button" variant="ghost">
+                      {t("allSizes")}
+                    </Button>
+                    <Button onClick={() => setSizes({})} type="button" variant="ghost">
+                      {t("noSizes")}
+                    </Button>
+                  </div>
+                </div>
+                <div aria-labelledby={sizePickerId} className="grid grid-cols-4 gap-2 sm:grid-cols-6" role="group">
+                  {(sizeChart.labels ?? []).map((label) => {
+                    const on = label in sizes;
+                    return (
+                      <button
+                        aria-pressed={on}
+                        className={`min-h-12 rounded-button border px-2 text-sm font-semibold tabular-nums transition-colors motion-reduce:transition-none ${focusRing} ${
+                          on ? "border-indigo bg-indigo text-white" : "border-line bg-white text-ink hover:border-slate-300 hover:bg-slate-50"
+                        }`}
+                        key={label}
+                        onClick={() => toggleSize(label)}
+                        type="button"
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {picked.length > 0 ? (
+                  <div className="flex flex-col gap-2 border-t border-line pt-4">
+                    <h3 className="text-sm font-semibold text-ink">{t("sizeStock")}</h3>
+                    <p className="text-xs text-slate">{t("sizeStockHint")}</p>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+                      {picked.map((label) => (
+                        <Field
+                          aria-label={t("quantityFor", { size: sizeDisplay(sizeChart, label) })}
+                          inputMode="decimal"
+                          key={label}
+                          label={sizeDisplay(sizeChart, label)}
+                          onChange={(event) => setSizes((current) => ({ ...current, [label]: event.target.value }))}
+                          placeholder="0"
+                          value={sizes[label]}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-sm text-slate">
+                      {t("sizesSummary", {
+                        count: picked.length,
+                        example: `${name.trim() ? `${name.trim()} · ` : ""}${sizeDisplay(sizeChart, picked[0])}`,
+                      })}
+                    </p>
+                  </div>
+                ) : null}
+              </>
+            ) : null}
+          </div>
+        </Panel>
+      )}
       <Panel title={t("prices")}>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field
@@ -209,7 +411,9 @@ export function ProductForm({ productId }: { productId?: string }) {
                     </option>
                   ))}
                 </SelectField>
-                <Field inputMode="decimal" label={t("openingQty")} onChange={(event) => setOpeningQty(event.target.value)} value={openingQty} />
+                {inSizes ? null : (
+                  <Field inputMode="decimal" label={t("openingQty")} onChange={(event) => setOpeningQty(event.target.value)} value={openingQty} />
+                )}
               </>
             )}
             <Field inputMode="decimal" label={t("reorder")} onChange={(event) => setReorderPoint(event.target.value)} value={reorderPoint} />
@@ -237,7 +441,7 @@ export function ProductForm({ productId }: { productId?: string }) {
           {t("cancel")}
         </Button>
         <Button busy={pending} onClick={() => void save()} type="button">
-          {pending ? t("saving") : t("save")}
+          {pending ? t("saving") : inSizes && picked.length > 0 ? t("saveSizes", { count: picked.length }) : t("save")}
         </Button>
       </div>
     </Page>
