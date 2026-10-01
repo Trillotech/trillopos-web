@@ -1,5 +1,6 @@
 "use client";
 
+import { ProductDiscountPanel } from "@/components/product-discount";
 import { useEffect, useState } from "react";
 import Decimal from "decimal.js";
 import { useTranslations } from "next-intl";
@@ -81,6 +82,8 @@ export function ProductDetail({ productId }: { productId: string }) {
           value={product.trackInventory ? formatQuantity(quantity) : "—"}
         />
       </div>
+
+      <ProductDiscountPanel product={product} currency={currency} canEdit={managesStock} onSaved={setProduct} />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Panel title={t("locations")}>

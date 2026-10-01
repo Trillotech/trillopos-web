@@ -245,7 +245,7 @@ export function SaleReceipt({ saleId }: { saleId: string }) {
       {parked ? (
         <Panel title={t("chargeCart")}>
           <form className="flex flex-col gap-4" onSubmit={(event) => void completeCart(event)}>
-            <p className="text-sm text-slate">{t("chargeHint")}</p>
+            <p className="text-sm text-slate">{t("heldPrices")}</p>
             <SelectField label={t("payMethod")} onChange={(event) => setPayMethod(event.target.value as typeof payMethod)} value={payMethod}>
               {payMethods.filter((value) => value !== "CREDIT" || sale.customerId).map((value) => (
                 <option key={value} value={value}>{codes("method", value)}</option>
