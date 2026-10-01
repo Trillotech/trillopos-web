@@ -111,7 +111,10 @@
     "register_required": "Set up this register before signing in with a PIN.",
     "register_invalid": "This register is no longer available. Ask the owner to set it up again.",
     "register_locked": "Too many wrong PINs. Wait five minutes and try again.",
-    "membership_locked": "Too many wrong PINs for this staff member. Wait five minutes."
+    "membership_locked": "Too many wrong PINs for this staff member. Wait five minutes.",
+    "pricing_changed": "Prices changed. Review the updated total, then try again.",
+    "invalid_product_discount": "Enter a valid positive discount; percentages cannot exceed 100.",
+    "discount_conflict": "This product already has an automatic discount."
   },
   "shell": {
     "product": "TrilloPOS",
@@ -510,7 +513,13 @@
     "removePayment": "Remove this payment",
     "noCustomers": "No customer found. Add them below.",
     "modeLabel": "Where the sale happens",
-    "amountHint": "Leave it empty to take the whole total."
+    "amountHint": "Leave it empty to take the whole total.",
+    "automaticSaving": "Product savings",
+    "lineTotal": "Line total",
+    "total": "Total to pay",
+    "tax": "Tax",
+    "pricing": "Calculating total...",
+    "retryPrice": "Try again"
   },
   "held": {
     "title": "Held sales",
@@ -549,7 +558,8 @@
     "rounding": "Rounding",
     "payments": "Payments",
     "voidQuestion": "Throw this held cart away? This can't be undone.",
-    "voidConfirm": "Yes, throw it away"
+    "voidConfirm": "Yes, throw it away",
+    "heldPrices": "This cart keeps its saved prices and discounts. New product prices apply to new sales."
   },
   "registers": {
     "title": "Registers",
@@ -1156,5 +1166,27 @@
     "cashierHint": "Start a sale, take payments and help customers.",
     "browseProducts": "Browse products",
     "startSale": "Start a sale"
+  },
+  "productDiscount": {
+    "title": "Automatic product discount",
+    "hint": "Save a discount here to apply it automatically to new sales. Each size has its own setting; when adding several sizes, this applies to all selected sizes.",
+    "add": "Add discount",
+    "edit": "Edit discount",
+    "type": "Discount type",
+    "percent": "Percentage",
+    "fixed": "Amount per unit",
+    "percentage": "Discount (%)",
+    "amount": "Discount per unit",
+    "enabled": "Discount enabled",
+    "wholesale": "Also apply to wholesale sales",
+    "capHint": "Retail sales only unless wholesale is selected. Fixed discounts are capped at the selling price. Whole-sale discounts apply afterward.",
+    "remove": "Remove discount",
+    "on": "On",
+    "off": "Off",
+    "none": "No automatic discount",
+    "bothPrices": "Applies to retail and wholesale sales.",
+    "retailOnly": "Applies to retail sales only.",
+    "turnOff": "Turn off",
+    "turnOn": "Turn on"
   }
 }

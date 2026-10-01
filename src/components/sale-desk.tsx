@@ -24,7 +24,7 @@ import { useRouter } from "@/i18n/navigation";
 import type { Schemas } from "@/lib/backend";
 import { useCodes } from "@/lib/codes";
 import { formatAmount, addQuantities } from "@/lib/money";
-import { messageFor, readJson } from "@/lib/read-json";
+import { ApiError, messageFor, readJson } from "@/lib/read-json";
 import { useMembershipRole } from "@/lib/role";
 import { matchesWords } from "@/lib/search";
 
@@ -34,7 +34,7 @@ type Shift = Schemas["ShiftView"];
 type Customer = Schemas["CustomerView"];
 type Method = Schemas["PaymentRequest"]["method"];
 
-type Line = { productId: string; name: string; quantity: string; discount: string };
+type Line = { productId: string; name: string; quantity: string };
 /** In the shop: a register shift and its drawer. Online: an order from Facebook, Viber or the phone — no shift. */
 type Mode = "STORE" | "ONLINE";
 type Tender = { method: Method; amount: string; reference: string };
@@ -142,12 +142,11 @@ export function SaleDesk() {
       if (existing) {
         return current.map((line) => line.productId === product.id ? { ...line, quantity: addQuantities([line.quantity, "1"]) } : line);
       }
-      return [...current, { productId: product.id!, name: product.name ?? "", quantity: "1", discount: "" }];
+      return [...current, { productId: product.id!, name: product.name ?? "", quantity: "1" }];
     });
   }
 
-  function cartBody() {
-    return {
+  const cartRequest = JSON.stringify({
       locationId,
       channel: mode === "ONLINE" ? "ONLINE" : "POS",
       cashierShiftId: mode === "STORE" ? shift?.id : undefined,
@@ -157,9 +156,31 @@ export function SaleDesk() {
       lines: lines.map((line) => ({
         productId: line.productId,
         quantity: line.quantity,
-        discountAmount: line.discount || undefined,
       })),
-    };
+  });
+  const [quoteRevision, setQuoteRevision] = useState(0);
+  const [quote, setQuote] = useState<{ request: string; revision: number; data?: Schemas["PricePreview"]; error?: string }>();
+  const canPrice = lines.length > 0 && Boolean(locationId);
+  const currentQuote = quote?.request === cartRequest && quote.revision === quoteRevision ? quote : undefined;
+  const preview = currentQuote?.data;
+  useEffect(() => {
+    if (!canPrice) return;
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      void readJson<Schemas["PricePreview"]>("/api/sales/preview", {
+        method: "POST", body: cartRequest, signal: controller.signal,
+      }).then((data) => {
+        if (!controller.signal.aborted) setQuote({ request: cartRequest, revision: quoteRevision, data });
+      }).catch((caught) => {
+        if (!controller.signal.aborted) setQuote({ request: cartRequest, revision: quoteRevision,
+          error: messageFor(caught, (code) => errors(code), errors.has) });
+      });
+    }, 200);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [cartRequest, canPrice, quoteRevision, errors]);
+
+  function cartBody() {
+    return { ...JSON.parse(cartRequest), pricingFingerprint: preview?.pricingFingerprint };
   }
 
   function payments() {
@@ -174,6 +195,7 @@ export function SaleDesk() {
   }
 
   async function checkout() {
+    if (!preview) return;
     setError(undefined);
     setErrorAt("cart");
     if (mode === "STORE" && !shift?.id) {
@@ -193,11 +215,13 @@ export function SaleDesk() {
       router.push(`/sales/${sale.id}`);
     } catch (caught) {
       fail("cart", caught);
+      if (caught instanceof ApiError && caught.code === "pricing_changed") setQuoteRevision((value) => value + 1);
       setBusy(undefined);
     }
   }
 
   async function hold() {
+    if (!preview) return;
     setError(undefined);
     setBusy("hold");
     try {
@@ -208,6 +232,7 @@ export function SaleDesk() {
       router.push(`/sales/${parked.id}`);
     } catch (caught) {
       fail("cart", caught);
+      if (caught instanceof ApiError && caught.code === "pricing_changed") setQuoteRevision((value) => value + 1);
       setBusy(undefined);
     }
   }
@@ -545,7 +570,7 @@ export function SaleDesk() {
                 </p>
               ) : (
                 <ul className="flex flex-col divide-y divide-line">
-                  {lines.map((line) => (
+                  {lines.map((line, index) => (
                     <li className="flex flex-col gap-2 py-4 first:pt-0" key={line.productId}>
                       <div className="flex items-start justify-between gap-2">
                         <p className="min-w-0 pt-2 font-semibold text-ink">{line.name}</p>
@@ -559,13 +584,24 @@ export function SaleDesk() {
                       </div>
                       <div className="grid grid-cols-2 gap-2">
                         <Field inputMode="decimal" label={t("qty")} onChange={(event) => setLines((current) => current.map((row) => row.productId === line.productId ? { ...row, quantity: event.target.value } : row))} value={line.quantity} />
-                        <Field inputMode="decimal" label={t("lineDiscount")} onChange={(event) => setLines((current) => current.map((row) => row.productId === line.productId ? { ...row, discount: event.target.value } : row))} value={line.discount} />
+                        {preview?.lines?.[index] ? <div className="flex flex-col justify-end text-right text-sm" aria-live="polite">
+                          <span className="text-slate">{t("automaticSaving")}: {formatAmount(preview.lines[index].discountAmount)}</span>
+                          <strong>{t("lineTotal")}: {formatAmount(preview.lines[index].lineTotal)}</strong>
+                        </div> : null}
                       </div>
                     </li>
                   ))}
                 </ul>
               )}
               <Field inputMode="decimal" label={t("cartDiscount")} onChange={(event) => setCartDiscount(event.target.value)} value={cartDiscount} />
+
+              {lines.length > 0 ? <div aria-live="polite" className="rounded-button bg-surface p-4">
+                {preview ? <dl className="flex flex-col gap-2 text-sm" data-testid="sale-preview">
+                  <div className="flex justify-between gap-4"><dt>{t("automaticSaving")}</dt><dd>{formatAmount(preview.totals?.lineDiscountTotal)}</dd></div>
+                  <div className="flex justify-between gap-4"><dt>{t("tax")}</dt><dd>{formatAmount(preview.totals?.taxAmount)}</dd></div>
+                  <div className="flex justify-between gap-4 text-lg font-bold"><dt>{t("total")}</dt><dd>{formatAmount(preview.totals?.total)}</dd></div>
+                </dl> : currentQuote?.error ? <><Alert>{currentQuote.error}</Alert><Button type="button" variant="ghost" onClick={() => setQuoteRevision((value) => value + 1)}>{t("retryPrice")}</Button></> : <p className="text-sm text-slate">{t("pricing")}</p>}
+              </div> : null}
 
               <div className="flex flex-col gap-4 border-t border-line pt-6" role="group" aria-labelledby="payment-title">
                 <h3 className="text-sm font-semibold text-ink" id="payment-title">{t("paymentTitle")}</h3>
@@ -618,7 +654,7 @@ export function SaleDesk() {
                 <Button
                   busy={busy === "charge"}
                   className="w-full"
-                  disabled={lines.length === 0 || (busy !== undefined && busy !== "charge")}
+                  disabled={!preview || lines.length === 0 || (busy !== undefined && busy !== "charge")}
                   onClick={() => void checkout()}
                   size="lg"
                   type="button"
@@ -628,7 +664,7 @@ export function SaleDesk() {
                 <Button
                   busy={busy === "hold"}
                   className="w-full"
-                  disabled={lines.length === 0 || (busy !== undefined && busy !== "hold")}
+                  disabled={!preview || lines.length === 0 || (busy !== undefined && busy !== "hold")}
                   onClick={() => void hold()}
                   type="button"
                   variant="secondary"

@@ -244,6 +244,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sales/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["preview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sales/checkout": {
         parameters: {
             query?: never;
@@ -1278,6 +1294,7 @@ export interface components {
             cartDiscountAmount?: number;
             lines: components["schemas"]["SaleLineRequest"][];
             hold?: boolean;
+            pricingFingerprint?: string;
             /** Format: uuid */
             customerId?: string;
         };
@@ -1452,6 +1469,32 @@ export interface components {
             tenderedAmount?: number;
             referenceNo?: string;
         };
+        PricePreview: {
+            lines?: components["schemas"]["PricedLine"][];
+            totals?: components["schemas"]["Totals"];
+            pricingFingerprint?: string;
+        };
+        PricedLine: {
+            /** Format: uuid */
+            productId?: string;
+            productName?: string;
+            sku?: string;
+            quantity?: number;
+            unitPrice?: number;
+            discountAmount?: number;
+            cartDiscountAllocated?: number;
+            taxRate?: number;
+            taxAmount?: number;
+            lineTotal?: number;
+        };
+        Totals: {
+            subtotal?: number;
+            lineDiscountTotal?: number;
+            cartDiscountAmount?: number;
+            taxAmount?: number;
+            roundingAdjustment?: number;
+            total?: number;
+        };
         CheckoutRequest: {
             idempotencyKey: string;
             /** Format: uuid */
@@ -1467,6 +1510,7 @@ export interface components {
             payments: components["schemas"]["PaymentRequest"][];
             /** Format: uuid */
             customerId?: string;
+            pricingFingerprint?: string;
         };
         ReturnLineRequest: {
             /** Format: uuid */
@@ -1622,6 +1666,13 @@ export interface components {
             quantity: number;
             unitCost?: number;
         };
+        ProductDiscount: {
+            /** @enum {string} */
+            type?: "PERCENT" | "FIXED";
+            value?: number;
+            enabled?: boolean;
+            includeWholesale?: boolean;
+        };
         ProductWrite: {
             /** Format: uuid */
             id?: string;
@@ -1647,6 +1698,7 @@ export interface components {
             barcodes?: string[];
             openingStock?: components["schemas"]["OpeningStockWrite"][];
             sizeEquivalents?: string;
+            discount?: components["schemas"]["ProductDiscount"];
         };
         ProductView: {
             /** Format: uuid */
@@ -1674,6 +1726,7 @@ export interface components {
             sellOnline?: boolean;
             active?: boolean;
             barcodes?: string[];
+            discount?: components["schemas"]["ProductDiscount"];
         };
         BarcodeWrite: {
             barcode: string;
@@ -1705,6 +1758,7 @@ export interface components {
             locationId?: string;
             unitCost?: number;
             sizes: components["schemas"]["SizeWrite"][];
+            discount?: components["schemas"]["ProductDiscount"];
         };
         ManualPayableRequest: {
             /** Format: uuid */
@@ -2723,6 +2777,30 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["SaleView"];
+                };
+            };
+        };
+    };
+    preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CartRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PricePreview"];
                 };
             };
         };

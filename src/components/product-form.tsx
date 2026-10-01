@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { useTranslations } from "next-intl";
 
+import { DiscountFields, discountBody, discountDraft, emptyDiscount } from "@/components/product-discount";
 import { DeleteProduct } from "@/components/delete-product";
 import { libraryName, SizeChartSelect } from "@/components/size-chart-select";
 import { Alert, Button, Checkbox, Field, focusRing, Page, PageHeader, PageLoading, Panel, SelectField } from "@/components/ui";
@@ -64,6 +65,7 @@ export function ProductForm({ productId }: { productId?: string }) {
   // adding in sizes: the chart, and the sizes picked with their opening quantity ("" for none yet)
   const [chart, setChart] = useState<ChartChoice>("");
   const [sizes, setSizes] = useState<Record<string, string>>({});
+  const [discount, setDiscount] = useState(emptyDiscount);
   const [retailPrice, setRetailPrice] = useState("");
   const [wholesalePrice, setWholesalePrice] = useState("");
   const [openingCost, setOpeningCost] = useState("");
@@ -109,6 +111,7 @@ export function ProductForm({ productId }: { productId?: string }) {
       return;
     }
     void readJson<Schemas["ProductView"]>(`/api/catalog/products/${productId}`).then((product) => {
+      setDiscount(discountDraft(product.discount));
       setName(product.name ?? "");
       setSku(product.sku ?? "");
       setBarcode(product.barcodes?.[0] ?? "");
@@ -117,7 +120,7 @@ export function ProductForm({ productId }: { productId?: string }) {
       setSizeLabel(product.sizeLabel ?? "");
       setSizeEquivalents(product.sizeEquivalents ?? "");
       setRetailPrice(product.retailPrice === undefined ? "" : String(product.retailPrice));
-      setWholesalePrice(product.wholesalePrice === undefined ? "" : String(product.wholesalePrice));
+      setWholesalePrice(product.wholesalePrice == null ? "" : String(product.wholesalePrice));
       setTrackInventory(product.trackInventory !== false);
       setReorderPoint(String(product.reorderPoint ?? 0));
       setSellInPos(product.sellInPos !== false);
@@ -188,6 +191,7 @@ export function ProductForm({ productId }: { productId?: string }) {
         categoryId: category,
         unit,
         retailPrice,
+        discount: discountBody(discount),
         wholesalePrice: wholesalePrice || undefined,
         trackInventory,
         reorderPoint: Number(reorderPoint || 0),
@@ -214,6 +218,7 @@ export function ProductForm({ productId }: { productId?: string }) {
       // an emptied box removes them; a product without sizes never sends the field
       sizeEquivalents: editing && (sizeLabel || sizeEquivalents) ? sizeEquivalents : undefined,
       retailPrice: retailPrice || undefined,
+      discount: discountBody(discount),
       wholesalePrice: wholesalePrice || undefined,
       trackInventory,
       reorderPoint: Number(reorderPoint || 0),
@@ -226,7 +231,7 @@ export function ProductForm({ productId }: { productId?: string }) {
         !editing && openingQty
           ? [{ locationId, quantity: openingQty, unitCost: openingCost || undefined }]
           : undefined,
-    } as Schemas["ProductWrite"];
+    };
     const saved = await readJson<Schemas["ProductView"]>(
       editing ? `/api/catalog/products/${productId}` : "/api/catalog/products",
       { method: editing ? "PATCH" : "POST", body: JSON.stringify(body) },
@@ -465,6 +470,7 @@ export function ProductForm({ productId }: { productId?: string }) {
           </div>
         </dl>
       </Panel>
+      <DiscountFields value={discount} onChange={setDiscount} currency={currency} />
       <Panel title={t("inventory")}>
         <div className="flex flex-col gap-4">
           <Checkbox checked={trackInventory} label={t("track")} onChange={(event) => setTrackInventory(event.target.checked)} />
