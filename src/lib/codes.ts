@@ -3,6 +3,8 @@ import { useTranslations } from "next-intl";
 type CodeGroup =
   | "method"
   | "saleStatus"
+  | "saleProgress"
+  | "salePayment"
   | "role"
   | "memberStatus"
   | "unit"

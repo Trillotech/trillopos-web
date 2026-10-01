@@ -114,7 +114,17 @@
     "membership_locked": "Too many wrong PINs for this staff member. Wait five minutes.",
     "pricing_changed": "Prices changed. Review the updated total, then try again.",
     "invalid_product_discount": "Enter a valid positive discount; percentages cannot exceed 100.",
-    "discount_conflict": "This product already has an automatic discount."
+    "discount_conflict": "This product already has an automatic discount.",
+    "sale_canceled": "This sale is canceled and cannot be reopened or paid.",
+    "use_sale_cancellation": "Use Cancel sale to reverse the goods and money.",
+    "refund_exceeds_received": "The refund is more than the money received. Clear the unpaid credit balance instead.",
+    "sale_credit_written_off": "The debt was written off. Review the accounts before canceling this sale.",
+    "sale_refund_incomplete": "This returned sale still has money or unpaid credit to reconcile.",
+    "restock_required": "Choose whether the goods return to stock.",
+    "reason_required": "Give a reason for this change.",
+    "payment_location_mismatch": "Record this payment at the sale's store.",
+    "idempotency_key_used": "This request key was already used. Reload the sale before trying again.",
+    "cancellation_changed": "Payments or returns changed. Review the updated cancellation amounts and confirm again."
   },
   "shell": {
     "product": "TrilloPOS",
@@ -492,7 +502,7 @@
     "exactDisabled": "Exact-amount and change preview",
     "modeStore": "In the shop",
     "modeOnline": "Online order",
-    "onlineHint": "Paid by KBZPay, WavePay or transfer: pick it and add the transaction number. Cash on delivery: choose or add the buyer and pay “On credit (pay later)”. It shows under Owed to you until the courier pays you; record that payment there.",
+    "onlineHint": "Paid by KBZPay, WavePay or transfer: pick it and add the transaction number. For a deposit or cash on delivery, choose a buyer and select Deposit or Unpaid. Record later payments on the receipt or under Owed to you.",
     "shipFrom": "Ship from",
     "newCustomer": "New customer",
     "newCustomerName": "Name",
@@ -519,7 +529,13 @@
     "total": "Total to pay",
     "tax": "Tax",
     "pricing": "Calculating total...",
-    "retryPrice": "Try again"
+    "retryPrice": "Try again",
+    "paymentPlan": "Payment status",
+    "depositAmount": "Deposit amount",
+    "depositMethod": "Deposit method",
+    "depositRemaining": "Remaining balance: {amount}",
+    "invalidDeposit": "Enter a deposit greater than zero and less than the total, with up to 2 decimal places.",
+    "creditPlanHint": "Choose a customer. The unpaid amount goes to their credit balance and can be collected later."
   },
   "held": {
     "title": "Held sales",
@@ -530,7 +546,7 @@
     "parked": "Parked sale",
     "total": "Total",
     "tax": "Tax",
-    "paid": "Paid",
+    "paid": "Money received",
     "due": "Due",
     "change": "Change",
     "customer": "Customer",
@@ -559,7 +575,11 @@
     "payments": "Payments",
     "voidQuestion": "Throw this held cart away? This can't be undone.",
     "voidConfirm": "Yes, throw it away",
-    "heldPrices": "This cart keeps its saved prices and discounts. New product prices apply to new sales."
+    "heldPrices": "This cart keeps its saved prices and discounts. New product prices apply to new sales.",
+    "moneyReturned": "Money returned",
+    "creditReleased": "Unpaid balance cleared",
+    "writtenOff": "Debt written off",
+    "allItemsReturned": "All items returned"
   },
   "registers": {
     "title": "Registers",
@@ -760,11 +780,11 @@
   },
   "salesLog": {
     "title": "Sales log",
-    "subtitle": "Every completed sale, newest first. Open one to see the receipt or record a return.",
+    "subtitle": "Every recorded sale, newest first. Open one to update progress, collect payment or record a return.",
     "heldTitle": "Held sales",
     "heldSubtitle": "Carts parked for later. Open one to charge it or throw it away.",
     "show": "Show",
-    "showDone": "Completed sales",
+    "showDone": "Recorded sales",
     "showAll": "Everything",
     "from": "From",
     "to": "To",
@@ -776,7 +796,12 @@
     "walkIn": "Walk-in",
     "online": "Online",
     "inShop": "In shop",
-    "items": "{count, plural, one {# item} other {# items}}"
+    "items": "{count, plural, one {# item} other {# items}}",
+    "progress": "Progress",
+    "paymentStatus": "Payment",
+    "anyProgress": "All progress",
+    "anyPayment": "All payments",
+    "allItemsReturned": "All items returned"
   },
   "account": {
     "title": "Account",
@@ -903,6 +928,17 @@
     },
     "costing": {
       "WEIGHTED_AVERAGE": "Weighted average"
+    },
+    "saleProgress": {
+      "OPEN": "Open",
+      "CLOSED": "Closed",
+      "CANCELED": "Canceled"
+    },
+    "salePayment": {
+      "PAID": "Paid",
+      "DEPOSIT": "Deposit",
+      "UNPAID": "Unpaid",
+      "REFUNDED": "Refunded"
     }
   },
   "guide": {
@@ -1188,5 +1224,34 @@
     "retailOnly": "Applies to retail sales only.",
     "turnOff": "Turn off",
     "turnOn": "Turn on"
+  },
+  "saleWorkflow": {
+    "title": "Sale progress",
+    "hint": "Progress tracks the work. Payment updates from the money received and returned.",
+    "close": "Close sale",
+    "reopen": "Reopen sale",
+    "collect": "Record payment",
+    "cancelSale": "Cancel sale",
+    "canceledHint": "This sale is canceled. Its remaining goods and money have been reversed.",
+    "writeOffHint": "Some debt was written off. This does not count as payment. Cancellation needs an accounting review.",
+    "cancelHint": "Cancel the remaining sale. Return the money received and clear the unpaid balance. This cannot be undone.",
+    "refundMoney": "Money to return",
+    "releaseCredit": "Unpaid balance to clear",
+    "restock": "Return goods to stock?",
+    "chooseRestock": "Choose what happens to the goods",
+    "restockYes": "Yes — goods are back in the shop",
+    "restockNo": "No — goods will not be restocked",
+    "amount": "Payment amount",
+    "due": "Outstanding: {amount}",
+    "paymentMethod": "Payment method",
+    "refundMethod": "Refund method",
+    "reference": "Reference (optional)",
+    "drawerHint": "If this store has an open shift, this cash enters or leaves that drawer.",
+    "reason": "Reason",
+    "confirmCancellation": "I checked the money and stock choices and want to cancel this sale.",
+    "confirmCancel": "Confirm cancellation",
+    "save": "Save change",
+    "back": "Back",
+    "history": "Progress history"
   }
 }

@@ -63,7 +63,7 @@ test("fixed discounts and held carts keep the confirmed amount after product cha
   await send(api, "PATCH", `/api/catalog/products/${product.id}`, { retailPrice: 30000, discount: { type: null } });
   await expect(page.getByText(/This cart keeps its saved prices/)).toBeVisible();
   await page.getByRole("button", { name: "Charge 37,000", exact: true }).click();
-  await expect(page.getByText("Completed", { exact: true })).toBeVisible();
+  await expect(page.getByTestId("sale-states")).toHaveText(/OpenPaid/);
   await expect(page.getByText("37,000").first()).toBeVisible();
 });
 

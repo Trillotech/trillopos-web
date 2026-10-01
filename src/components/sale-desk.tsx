@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Decimal from "decimal.js";
 import { useTranslations } from "next-intl";
 
 import { ArrowDownIcon, CartIcon, ChevronDownIcon, PlusIcon, TrashIcon } from "@/components/icons";
@@ -64,6 +65,10 @@ export function SaleDesk() {
   const [lines, setLines] = useState<Line[]>([]);
   const [cartDiscount, setCartDiscount] = useState("");
   const [tenders, setTenders] = useState<Tender[]>([{ method: "CASH", amount: "", reference: "" }]);
+  const [paymentPlan, setPaymentPlan] = useState<"PAID" | "DEPOSIT" | "UNPAID">("PAID");
+  const [depositAmount, setDepositAmount] = useState("");
+  const [depositMethod, setDepositMethod] = useState<Method>("KBZ_PAY");
+  const [depositReference, setDepositReference] = useState("");
   const [priceChoice, setPriceChoice] = useState<"" | "RETAIL" | "WHOLESALE">("RETAIL");
   const [customerQuery, setCustomerQuery] = useState("");
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -78,7 +83,7 @@ export function SaleDesk() {
   const [newPhone, setNewPhone] = useState("");
 
   const stores = locations.filter((row) => row.type === "STORE" && row.active !== false);
-  const methods: Method[] = customer ? [...cashMethods, "CREDIT"] : [...cashMethods];
+  const methods: Method[] = [...cashMethods];
   // the shift answer for the store now picked has arrived, open or not
   const shiftKnown = shiftFor === locationId;
 
@@ -184,6 +189,13 @@ export function SaleDesk() {
   }
 
   function payments() {
+    if (paymentPlan === "UNPAID") return [{ method: "CREDIT" }];
+    if (paymentPlan === "DEPOSIT") {
+      const total = new Decimal(preview?.totals?.total ?? 0);
+      const deposit = new Decimal(depositAmount || 0);
+      return [{ method: depositMethod, amount: deposit.toString(), referenceNo: depositReference || undefined },
+        { method: "CREDIT", amount: total.minus(deposit).toString() }];
+    }
     // the only payment, left empty (or cash handed over): the backend takes the whole total
     const whole = tenders.length === 1;
     return tenders.map((tender) => ({
@@ -202,9 +214,15 @@ export function SaleDesk() {
       setError(t("needShift"));
       return;
     }
-    if (tenders.some((tender) => tender.method === "CREDIT") && !customer) {
+    if ((paymentPlan !== "PAID" || tenders.some((tender) => tender.method === "CREDIT")) && !customer) {
       setError(errors("customer_required"));
       return;
+    }
+    if (paymentPlan === "DEPOSIT") {
+      try {
+        const deposit = new Decimal(depositAmount || 0);
+        if (!deposit.isFinite() || deposit.lte(0) || deposit.gte(preview.totals?.total ?? 0) || deposit.decimalPlaces() > 2) throw new Error("invalid");
+      } catch { setError(t("invalidDeposit")); return; }
     }
     setBusy("charge");
     try {
@@ -506,6 +524,7 @@ export function SaleDesk() {
                 <Button
                   onClick={() => {
                     setCustomer(undefined);
+                    setPaymentPlan("PAID");
                     setPriceChoice("RETAIL");
                     setTenders((current) => current.map((row) => row.method === "CREDIT" ? { ...row, method: "CASH" } : row));
                   }}
@@ -605,7 +624,19 @@ export function SaleDesk() {
 
               <div className="flex flex-col gap-4 border-t border-line pt-6" role="group" aria-labelledby="payment-title">
                 <h3 className="text-sm font-semibold text-ink" id="payment-title">{t("paymentTitle")}</h3>
-                {tenders.map((tender, index) => (
+                <SelectField label={t("paymentPlan")} value={paymentPlan} onChange={event=>setPaymentPlan(event.target.value as typeof paymentPlan)}>
+                  {["PAID", "DEPOSIT", "UNPAID"].map(value=><option key={value} value={value}>{codes("salePayment",value)}</option>)}
+                </SelectField>
+                {paymentPlan !== "PAID" ? <p className="text-sm text-slate">{t("creditPlanHint")}</p> : null}
+                {paymentPlan === "DEPOSIT" ? <>
+                  <Field label={t("depositAmount")} inputMode="decimal" value={depositAmount} onChange={event=>setDepositAmount(event.target.value)} />
+                  <SelectField label={t("depositMethod")} value={depositMethod} onChange={event=>setDepositMethod(event.target.value as Method)}>
+                    {cashMethods.map(value=><option key={value} value={value}>{codes("method",value)}</option>)}
+                  </SelectField>
+                  <Field label={t("reference")} maxLength={100} value={depositReference} onChange={event=>setDepositReference(event.target.value)} />
+                  {preview && /^\d+(\.\d{0,2})?$/.test(depositAmount) && new Decimal(depositAmount).gt(0) && new Decimal(depositAmount).lt(preview.totals?.total ?? 0) ? <p className="font-semibold text-ink">{t("depositRemaining", {amount:formatAmount(new Decimal(preview.totals?.total ?? 0).minus(depositAmount).toString())})}</p> : null}
+                </> : null}
+                {paymentPlan === "PAID" ? <>{tenders.map((tender, index) => (
                   <div className={`flex flex-col gap-2 ${tenders.length > 1 ? "rounded-button border border-line p-4" : ""}`} key={index}>
                     <div className="flex items-end gap-2">
                       <SelectField
@@ -646,7 +677,7 @@ export function SaleDesk() {
                   <PlusIcon className="size-4" />
                   {t("addPayment")}
                 </Button>
-                <p className="text-xs text-slate">{t("changeOnReceipt")}</p>
+                <p className="text-xs text-slate">{t("changeOnReceipt")}</p></> : null}
               </div>
 
               {error && errorAt === "cart" ? <Alert>{error}</Alert> : null}

@@ -19,6 +19,7 @@ import {
   SelectField,
 } from "@/components/ui";
 import { Link } from "@/i18n/navigation";
+import { SaleStates } from "@/components/sale-states";
 import type { Schemas } from "@/lib/backend";
 import { useCodes } from "@/lib/codes";
 import { formatAmount } from "@/lib/money";
@@ -37,6 +38,8 @@ export function SalesLog({ held = false }: { held?: boolean }) {
   const codes = useCodes();
   const [rows, setRows] = useState<Row[]>([]);
   const [show, setShow] = useState<"done" | "all">("done");
+  const [progress, setProgress] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [error, setError] = useState<string>();
@@ -54,6 +57,8 @@ export function SalesLog({ held = false }: { held?: boolean }) {
     if (to) {
       search.set("to", to);
     }
+    if (!held && progress) search.set("progress", progress);
+    if (!held && paymentStatus) search.set("paymentStatus", paymentStatus);
     search.set("limit", "200");
     // state changes only once the answer is in, never synchronously inside the effect
     return readJson<Row[]>(`/api/sales?${search}`)
@@ -63,7 +68,7 @@ export function SalesLog({ held = false }: { held?: boolean }) {
       })
       .catch((caught) => setError(messageFor(caught, errors, (code) => errors.has(code))))
       .finally(() => setLoaded(true));
-  }, [held, show, from, to, errors]);
+  }, [held, show, from, to, progress, paymentStatus, errors]);
 
   useEffect(() => {
     void load();
@@ -86,7 +91,7 @@ export function SalesLog({ held = false }: { held?: boolean }) {
       {held ? null : (
         <Panel>
           <form
-            className="grid grid-cols-2 gap-4 lg:grid-cols-[repeat(3,minmax(0,1fr))_auto] lg:items-end"
+            className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:items-end"
             onSubmit={(event) => {
               event.preventDefault();
               setRefreshing(true);
@@ -96,6 +101,14 @@ export function SalesLog({ held = false }: { held?: boolean }) {
             <SelectField className="col-span-2 lg:col-span-1" label={t("show")} onChange={(event) => setShow(event.target.value as typeof show)} value={show}>
               <option value="done">{t("showDone")}</option>
               <option value="all">{t("showAll")}</option>
+            </SelectField>
+            <SelectField label={t("progress")} value={progress} onChange={event=>setProgress(event.target.value)}>
+              <option value="">{t("anyProgress")}</option>
+              {["OPEN","CLOSED","CANCELED"].map(value=><option key={value} value={value}>{codes("saleProgress",value)}</option>)}
+            </SelectField>
+            <SelectField label={t("paymentStatus")} value={paymentStatus} onChange={event=>setPaymentStatus(event.target.value)}>
+              <option value="">{t("anyPayment")}</option>
+              {["PAID","DEPOSIT","UNPAID","REFUNDED"].map(value=><option key={value} value={value}>{codes("salePayment",value)}</option>)}
             </SelectField>
             <Field label={t("from")} onChange={(event) => setFrom(event.target.value)} type="date" value={from} />
             <Field label={t("to")} onChange={(event) => setTo(event.target.value)} type="date" value={to} />
@@ -123,9 +136,10 @@ export function SalesLog({ held = false }: { held?: boolean }) {
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold text-ink">{row.receiptNumber ?? t("parked")}</span>
                     <Badge tone={row.channel === "ONLINE" ? "info" : "muted"}>{codes("channel", row.channel)}</Badge>
-                    {row.status !== "COMPLETED" ? (
+                    <SaleStates sale={row} />
+                    {row.status !== "COMPLETED" && row.progress !== "CANCELED" ? (
                       <Badge tone={row.status === "HELD" || row.status === "DRAFT" ? "warn" : row.status === "VOID" ? "bad" : "muted"}>
-                        {codes("saleStatus", row.status)}
+                        {row.status === "REFUNDED" ? t("allItemsReturned") : codes("saleStatus", row.status)}
                       </Badge>
                     ) : null}
                   </span>

@@ -36,7 +36,7 @@ test("cash on delivery: sold on credit to a new buyer, then the courier pays", a
   await page.getByLabel("Phone (optional)").fill(testPhone());
   await page.getByRole("button", { name: "Add and select" }).click();
   await expect(page.getByText(buyer).first()).toBeVisible();
-  await page.getByLabel("Method").selectOption("CREDIT");
+  await page.getByRole("combobox", { name: "Payment status", exact: true }).selectOption("UNPAID");
   await page.getByRole("button", { name: "Charge", exact: true }).click();
   await expect(page).toHaveURL(/\/en\/sales\/[0-9a-f-]{36}$/);
 
