@@ -18,6 +18,8 @@ import {
   SelectField,
 } from "@/components/ui";
 import { useRouter } from "@/i18n/navigation";
+import { SaleStates } from "@/components/sale-states";
+import { SaleWorkflow } from "@/components/sale-workflow";
 import type { Schemas } from "@/lib/backend";
 import { useCodes } from "@/lib/codes";
 import { formatAmount, formatQuantity } from "@/lib/money";
@@ -53,11 +55,12 @@ export function SaleReceipt({ saleId }: { saleId: string }) {
   const router = useRouter();
 
   useEffect(() => {
-    void readJson<Schemas["SaleView"]>(`/api/sales/${saleId}`).then(setSale);
-  }, [saleId]);
+    void readJson<Schemas["SaleView"]>(`/api/sales/${saleId}`).then(setSale)
+      .catch(caught=>setError(messageFor(caught, errors, code=>errors.has(code))));
+  }, [saleId, errors]);
 
   if (!sale) {
-    return <PageLoading panels={2} />;
+    return error ? <Page><Alert>{error}</Alert></Page> : <PageLoading panels={2} />;
   }
 
   const lines = (sale.lines ?? []) as SaleLine[];
@@ -161,13 +164,15 @@ export function SaleReceipt({ saleId }: { saleId: string }) {
       <PageHeader
         subtitle={
           <span className="flex flex-wrap items-center gap-2">
-            <Badge tone={tone}>{codes("saleStatus", sale.status)}</Badge>
+            {sale.status !== "COMPLETED" ? <Badge tone={tone}>{sale.status === "REFUNDED" ? t("allItemsReturned") : codes("saleStatus", sale.status)}</Badge> : null}
+            <SaleStates sale={sale} />
             <span>{codes("channel", sale.channel)}</span>
             {when ? <span>· {when}</span> : null}
           </span>
         }
         title={sale.receiptNumber ?? t("parked")}
       />
+      {sale.paymentState ? <SaleWorkflow sale={sale} onSaved={setSale} /> : null}
       {/* above the receipt: a return of everything closes the Return form it came from */}
       {notice ? <Alert tone="success">{notice}</Alert> : null}
 
@@ -212,8 +217,11 @@ export function SaleReceipt({ saleId }: { saleId: string }) {
               <dt className="text-base font-semibold text-ink">{t("total")}</dt>
               <dd className="text-2xl font-bold text-ink tabular-nums">{formatAmount(sale.total)}</dd>
             </div>
-            {parked ? null : <Row label={t("paid")} value={formatAmount(sale.paidAmount)} />}
-            {nonZero(sale.dueAmount) ? <Row label={t("due")} strong value={formatAmount(sale.dueAmount)} /> : null}
+            {parked ? null : <Row label={t("paid")} value={formatAmount(sale.paymentState?.receivedAmount ?? sale.paidAmount)} />}
+            {nonZero(sale.paymentState?.refundedAmount) ? <Row label={t("moneyReturned")} value={formatAmount(sale.paymentState?.refundedAmount)} /> : null}
+            {nonZero(sale.paymentState?.creditReleasedAmount) ? <Row label={t("creditReleased")} value={formatAmount(sale.paymentState?.creditReleasedAmount)} /> : null}
+            {nonZero(sale.paymentState?.writtenOffAmount) ? <Row label={t("writtenOff")} value={formatAmount(sale.paymentState?.writtenOffAmount)} /> : null}
+            {nonZero(sale.paymentState?.outstandingAmount ?? sale.dueAmount) ? <Row label={t("due")} strong value={formatAmount(sale.paymentState?.outstandingAmount ?? sale.dueAmount)} /> : null}
           </dl>
 
           {sale.payments?.length ? (

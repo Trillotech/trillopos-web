@@ -212,6 +212,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/sales/{id}/progress": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["history"];
+        put?: never;
+        post: operations["progress"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sales/{id}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["payment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/sales/{id}/hold": {
         parameters: {
             query?: never;
@@ -238,6 +270,22 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sales/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["cancel"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1330,6 +1378,18 @@ export interface components {
             lineTotal?: number;
             unitCost?: number;
         };
+        SalePaymentState: {
+            /** @enum {string} */
+            status?: "PAID" | "DEPOSIT" | "UNPAID" | "REFUNDED";
+            /** Format: uuid */
+            receivableId?: string;
+            receivedAmount?: number;
+            refundedAmount?: number;
+            netReceivedAmount?: number;
+            creditReleasedAmount?: number;
+            writtenOffAmount?: number;
+            outstandingAmount?: number;
+        };
         SaleView: {
             /** Format: uuid */
             id?: string;
@@ -1360,6 +1420,9 @@ export interface components {
             soldAt?: string;
             lines?: components["schemas"]["SaleLineView"][];
             payments?: components["schemas"]["PaymentView"][];
+            /** @enum {string} */
+            progress?: "OPEN" | "CLOSED" | "CANCELED";
+            paymentState?: components["schemas"]["SalePaymentState"];
         };
         LocationSettingsWrite: {
             /** Format: int32 */
@@ -1458,6 +1521,28 @@ export interface components {
         CloseRequest: {
             countedCash: number;
         };
+        SaleProgressRequest: {
+            /** @enum {string} */
+            progress: "OPEN" | "CLOSED" | "CANCELED";
+            reason: string;
+        };
+        SaleActionView: {
+            /** Format: uuid */
+            saleId?: string;
+            replayed?: boolean;
+        };
+        SaleCollectRequest: {
+            amount: number;
+            /** @enum {string} */
+            method: "CASH" | "KBZ_PAY" | "WAVE_PAY" | "AYA_PAY" | "CB_PAY" | "BANK_TRANSFER" | "CREDIT" | "OTHER";
+            /** Format: uuid */
+            locationId: string;
+            /** Format: uuid */
+            cashierShiftId?: string;
+            referenceNo?: string;
+            note?: string;
+            idempotencyKey: string;
+        };
         CompleteRequest: {
             idempotencyKey: string;
             payments: components["schemas"]["PaymentRequest"][];
@@ -1468,6 +1553,25 @@ export interface components {
             amount?: number;
             tenderedAmount?: number;
             referenceNo?: string;
+        };
+        SaleCancelRequest: {
+            reason: string;
+            restock: boolean;
+            /** @enum {string} */
+            refundMethod?: "CASH" | "KBZ_PAY" | "WAVE_PAY" | "AYA_PAY" | "CB_PAY" | "BANK_TRANSFER" | "CREDIT" | "OTHER";
+            /** Format: uuid */
+            cashierShiftId?: string;
+            referenceNo?: string;
+            idempotencyKey: string;
+            expectedNetReceivedAmount?: number;
+            expectedOutstandingAmount?: number;
+        };
+        Cancellation: {
+            /** Format: uuid */
+            saleId?: string;
+            /** Format: uuid */
+            returnId?: string;
+            replayed?: boolean;
         };
         PricePreview: {
             lines?: components["schemas"]["PricedLine"][];
@@ -1564,6 +1668,8 @@ export interface components {
             /** Format: date-time */
             returnedAt?: string;
             lines?: components["schemas"]["ReturnLineView"][];
+            creditRefundAmount?: number;
+            roundingRefundAmount?: number;
         };
         BindRequest: {
             /** Format: uuid */
@@ -2203,6 +2309,22 @@ export interface components {
             soldAt?: string;
             /** Format: date-time */
             createdAt?: string;
+            /** @enum {string} */
+            progress?: "OPEN" | "CLOSED" | "CANCELED";
+            paymentState?: components["schemas"]["SalePaymentState"];
+        };
+        SaleProgressEventView: {
+            /** Format: uuid */
+            id?: string;
+            /** @enum {string} */
+            fromProgress?: "OPEN" | "CLOSED" | "CANCELED";
+            /** @enum {string} */
+            toProgress?: "OPEN" | "CLOSED" | "CANCELED";
+            reason?: string;
+            /** Format: date-time */
+            changedAt?: string;
+            /** Format: uuid */
+            changedBy?: string;
         };
         ProductTotal: {
             /** Format: uuid */
@@ -2669,6 +2791,8 @@ export interface operations {
                 from?: string;
                 to?: string;
                 limit?: number;
+                progress?: "OPEN" | "CLOSED" | "CANCELED";
+                paymentStatus?: "PAID" | "DEPOSIT" | "UNPAID" | "REFUNDED";
             };
             header?: never;
             path?: never;
@@ -2733,6 +2857,80 @@ export interface operations {
             };
         };
     };
+    history: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SaleProgressEventView"][];
+                };
+            };
+        };
+    };
+    progress: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaleProgressRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SaleActionView"];
+                };
+            };
+        };
+    };
+    payment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaleCollectRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SaleActionView"];
+                };
+            };
+        };
+    };
     hold: {
         parameters: {
             query?: never;
@@ -2777,6 +2975,32 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["SaleView"];
+                };
+            };
+        };
+    };
+    cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaleCancelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["Cancellation"];
                 };
             };
         };
