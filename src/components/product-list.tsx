@@ -226,7 +226,7 @@ export function ProductList() {
                     <tr className="transition-colors hover:bg-slate-50 motion-reduce:transition-none" key={product.id}>
                       <td className="px-4 py-4">
                         <Link
-                          className={`rounded-sm font-semibold text-ink hover:text-indigo hover:underline ${focusRing}`}
+                          className={`rounded-sm font-semibold text-ink hover:text-brand-ink hover:underline ${focusRing}`}
                           href={`/products/${product.id}`}
                         >
                           {product.name}

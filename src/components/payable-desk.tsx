@@ -289,7 +289,7 @@ export function PayableDesk({ initialId }: { initialId?: string }) {
                 {rows.map((row) => (
                   <tr className="transition-colors hover:bg-slate-50 motion-reduce:transition-none" key={row.id}>
                     <td className="px-4 py-4">
-                      <button className={`rounded-sm font-semibold text-ink hover:text-indigo hover:underline ${insetFocusRing}`} onClick={() => void open(row.id!)} type="button">
+                      <button className={`rounded-sm font-semibold text-ink hover:text-brand-ink hover:underline ${insetFocusRing}`} onClick={() => void open(row.id!)} type="button">
                         {row.supplierName}
                       </button>
                     </td>

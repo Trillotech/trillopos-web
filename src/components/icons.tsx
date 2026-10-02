@@ -160,6 +160,134 @@ export function ChevronUpDownIcon(props: IconProps) {
   return <Svg {...props}><path d="m8 9 4-4 4 4M16 15l-4 4-4-4" /></Svg>;
 }
 
+export function GridIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect height="7" rx="2" width="7" x="3.5" y="3.5" />
+      <rect height="7" rx="2" width="7" x="13.5" y="3.5" />
+      <rect height="7" rx="2" width="7" x="3.5" y="13.5" />
+      <rect height="7" rx="2" width="7" x="13.5" y="13.5" />
+    </Svg>
+  );
+}
+
+export function TagIcon(props: IconProps) {
+  return <Svg {...props}><path d="M3.5 12.5v-8a1 1 0 0 1 1-1h8l8 8a1.4 1.4 0 0 1 0 2l-7 7a1.4 1.4 0 0 1-2 0Z" /><path d="M8 8h.01" /></Svg>;
+}
+
+export function LayersIcon(props: IconProps) {
+  return <Svg {...props}><path d="m12 3 9 5-9 5-9-5Z" /><path d="m3 12.5 9 5 9-5M3 17l9 5 9-5" /></Svg>;
+}
+
+export function TruckIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M3 6h11v10H3zM14 9h4l3 3v4h-7" />
+      <circle cx="7" cy="18" r="1.8" />
+      <circle cx="17.5" cy="18" r="1.8" />
+    </Svg>
+  );
+}
+
+export function ClockIcon(props: IconProps) {
+  return <Svg {...props}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></Svg>;
+}
+
+/** Money coming in to the shop. */
+export function ArrowDownLeftIcon(props: IconProps) {
+  return <Svg {...props}><path d="M17 7 7 17M7 9v8h8" /></Svg>;
+}
+
+/** Money going out of the shop. */
+export function ArrowUpRightIcon(props: IconProps) {
+  return <Svg {...props}><path d="M7 17 17 7M9 7h8v8" /></Svg>;
+}
+
+export function StoreIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M4 9.5 5.5 4h13L20 9.5" />
+      <path d="M4 9.5a2.7 2.7 0 0 0 5.3 0 2.7 2.7 0 0 0 5.4 0 2.7 2.7 0 0 0 5.3 0M5 12v8h14v-8M10 20v-5h4v5" />
+    </Svg>
+  );
+}
+
+export function BadgeIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <rect height="16" rx="2" width="16" x="4" y="4" />
+      <circle cx="12" cy="10" r="2.5" />
+      <path d="M8 16.5a4 4 0 0 1 8 0" />
+    </Svg>
+  );
+}
+
+export function MonitorIcon(props: IconProps) {
+  return <Svg {...props}><rect height="11" rx="2" width="18" x="3" y="4" /><path d="M8 20h8M12 15v5" /></Svg>;
+}
+
+export function BuildingIcon(props: IconProps) {
+  return <Svg {...props}><path d="M4 21V5a1 1 0 0 1 1-1h9a1 1 0 0 1 1 1v16M15 9h4a1 1 0 0 1 1 1v11M3 21h18M8 8h3M8 12h3M8 16h3" /></Svg>;
+}
+
+export function BellIcon(props: IconProps) {
+  return <Svg {...props}><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15Z" /><path d="M10 20.5a2 2 0 0 0 4 0" /></Svg>;
+}
+
+export function PrinterIcon(props: IconProps) {
+  return (
+    <Svg {...props}>
+      <path d="M7 8V3.5h10V8M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+      <path d="M7 14h10v6.5H7z" />
+    </Svg>
+  );
+}
+
+export function TrendUpIcon(props: IconProps) {
+  return <Svg {...props}><path d="m3 17 6-6 4 4 8-8M15 7h6v6" /></Svg>;
+}
+
+export function TrendDownIcon(props: IconProps) {
+  return <Svg {...props}><path d="m3 7 6 6 4-4 8 8M15 17h6v-6" /></Svg>;
+}
+
+export function WarningIcon(props: IconProps) {
+  return <Svg {...props}><path d="M10.3 4.2 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0Z" /><path d="M12 9.5v4M12 17h.01" /></Svg>;
+}
+
+/** Money or goods going back: a refund, a return. */
+export function ReturnIcon(props: IconProps) {
+  return <Svg {...props}><path d="M9 14 4 9l5-5" /><path d="M4 9h11a5 5 0 0 1 0 10h-3" /></Svg>;
+}
+
+export function MinusIcon(props: IconProps) {
+  return <Svg {...props}><path d="M5 12h14" /></Svg>;
+}
+
+export function BanknoteIcon(props: IconProps) {
+  return <Svg {...props}><rect height="12" rx="2" width="19" x="2.5" y="6" /><circle cx="12" cy="12" r="2.5" /><path d="M6 9.5v.01M18 14.5v.01" /></Svg>;
+}
+
+export function PhoneIcon(props: IconProps) {
+  return <Svg {...props}><rect height="18" rx="2.5" width="11" x="6.5" y="3" /><path d="M11 17.5h2" /></Svg>;
+}
+
+export function BankIcon(props: IconProps) {
+  return <Svg {...props}><path d="m3 9 9-5 9 5M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20.5h18" /></Svg>;
+}
+
+export function UserPlusIcon(props: IconProps) {
+  return <Svg {...props}><circle cx="10" cy="8" r="4" /><path d="M3 20a7 7 0 0 1 12.5-4.3M19 14v6M16 17h6" /></Svg>;
+}
+
+export function ChartIcon(props: IconProps) {
+  return <Svg {...props}><path d="M4 20V4M4 20h16" /><path d="M8 16v-4M12 16V8M16 16v-6" /></Svg>;
+}
+
+export function PieIcon(props: IconProps) {
+  return <Svg {...props}><path d="M12 3v9h9a9 9 0 1 1-9-9Z" /><path d="M15 3.5A9 9 0 0 1 20.5 9H15Z" /></Svg>;
+}
+
 export function Spinner({ className = "size-4" }: IconProps) {
   return (
     <svg aria-hidden="true" className={`animate-spin ${className}`} fill="none" viewBox="0 0 24 24">

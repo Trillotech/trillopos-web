@@ -10,7 +10,7 @@ export async function AuthFrame({ children }: { children: React.ReactNode }) {
         <p className="flex items-center gap-2 text-lg font-bold tracking-tight text-ink">
           <span
             aria-hidden="true"
-            className="flex size-8 items-center justify-center rounded-button bg-indigo text-sm font-extrabold text-white"
+            className="flex size-8 items-center justify-center rounded-button bg-brand font-display text-sm font-extrabold text-navy"
           >
             T
           </span>

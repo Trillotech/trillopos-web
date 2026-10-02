@@ -26,7 +26,7 @@ test("product discounts can be added, paused, resumed and removed; sales price t
   await expect(page.getByTestId("sale-preview")).toContainText("4,000");
   await page.getByTestId("sale-preview").scrollIntoViewIfNeeded();
   await page.screenshot({ path: testInfo.outputPath("discounted-sale.png") });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
   await page.getByRole("button", { name: "Charge", exact: true }).click();
   await expect(page).toHaveURL(/\/sales\/[0-9a-f-]{36}$/);
   const receipt = page.url();

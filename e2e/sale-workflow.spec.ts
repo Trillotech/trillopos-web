@@ -55,7 +55,7 @@ test("online deposit, close/reopen and final payment update independent states a
   const view=await(await api.get(`/api/sales/${id}`)).json();
   expect(Number(view.paymentState.receivedAmount)).toBe(20000);
   expect(Number(view.paymentState.outstandingAmount)).toBe(0);
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
   await page.screenshot({path:testInfo.outputPath("paid-receipt.png")});
 });
 
@@ -72,7 +72,7 @@ test("canceling a deposit refunds the deposit, clears debt and optionally restor
   await page.getByLabel("I checked the money and stock choices and want to cancel this sale.",{exact:true}).check();
   await page.getByRole("button",{name:"Confirm cancellation",exact:true}).scrollIntoViewIfNeeded();
   await page.screenshot({path:testInfo.outputPath("cancellation-review.png")});
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
   await page.getByRole("button",{name:"Confirm cancellation",exact:true}).click();
   await expect(page.getByTestId("sale-states")).toHaveText(/CanceledRefunded/);
   await page.reload();
@@ -109,7 +109,7 @@ test("sales log filters progress and payment together and shows both badges on a
   await page.getByRole("combobox",{name:"Payment",exact:true}).selectOption("UNPAID");
   const row=page.getByRole("link").filter({hasText:sale.receiptNumber});
   await expect(row).toBeVisible();await expect(row).toContainText("Open");await expect(row).toContainText("Unpaid");
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth)).toBe(true);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
   await row.scrollIntoViewIfNeeded();
   await page.screenshot({path:testInfo.outputPath("filtered-sales-log.png")});
   await page.getByRole("combobox",{name:"Progress",exact:true}).selectOption("CLOSED");

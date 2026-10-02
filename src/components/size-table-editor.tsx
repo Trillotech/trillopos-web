@@ -5,12 +5,12 @@ import { useTranslations } from "next-intl";
 import { CloseIcon, PlusIcon } from "@/components/icons";
 import { Button, focusRing, IconButton, SelectField } from "@/components/ui";
 
-const cellInput = `min-h-10 w-14 rounded-control border px-1.5 text-base text-ink tabular-nums shadow-xs transition placeholder:text-slate/60 focus:border-indigo focus:outline-hidden focus:ring-2 focus:ring-indigo/25 motion-reduce:transition-none sm:w-20 sm:px-2 sm:text-sm ${focusRing}`;
+const cellInput = `min-h-10 w-14 rounded-control border px-1.5 text-base text-ink tabular-nums shadow-xs transition placeholder:text-slate/60 focus:border-brand-ink focus:outline-hidden focus:ring-3 focus:ring-brand/25 motion-reduce:transition-none sm:w-20 sm:px-2 sm:text-sm ${focusRing}`;
 
 /** Headers grey, the labelling column tinted, the rest plain. */
 const cellColours = (header: boolean, labelling: boolean) =>
   labelling
-    ? `border-indigo/40 font-semibold ${header ? "bg-indigo-100" : "bg-indigo-50"}`
+    ? `border-brand/50 font-semibold ${header ? "bg-brand/25" : "bg-brand-soft"}`
     : header
       ? "border-line bg-surface font-semibold"
       : "border-line bg-white";

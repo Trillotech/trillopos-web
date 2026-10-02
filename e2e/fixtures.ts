@@ -134,7 +134,10 @@ export const test = base.extend<Fixtures, WorkerFixtures>({
 
 export { expect };
 
-/** Opens a page of the app's menu the way a person does: sidebar on a laptop, More on a phone. */
+/**
+ * Opens a page of the app's menu the way a person does: sidebar on a laptop, More on a phone.
+ * Most pages sit under a heading; a group that folds (Settings) is opened first.
+ */
 export async function openFromMenu(page: Page, group: string | null, item: string) {
   const isPhone = (page.viewportSize()?.width ?? 1280) < 768;
   const menu = isPhone ? page.getByRole("dialog", { name: "Menu" }) : page.locator("aside");
@@ -142,7 +145,10 @@ export async function openFromMenu(page: Page, group: string | null, item: strin
     await page.getByRole("button", { name: "More", exact: true }).click();
   }
   if (group) {
-    await menu.getByRole("button", { name: group, exact: true }).click();
+    const fold = menu.getByRole("button", { name: group, exact: true });
+    if (await fold.count()) {
+      await fold.click();
+    }
   }
   await menu.getByRole("link", { name: item, exact: true }).click();
 }

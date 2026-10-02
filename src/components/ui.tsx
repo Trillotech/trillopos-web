@@ -17,14 +17,14 @@ import { Link, useRouter } from "@/i18n/navigation";
 
 /** The keyboard focus ring every control shares; a mouse or a finger never leaves it behind. */
 export const focusRing =
-  "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2";
+  "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-ink focus-visible:ring-offset-2";
 
 /** The same ring drawn inside the edge, for rows in a list that clips its corners. */
 export const insetFocusRing =
-  "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-inset";
+  "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-ink focus-visible:ring-inset";
 
 /** An inline link inside a sentence or under a form. */
-export const linkClasses = `rounded-sm font-semibold text-teal underline-offset-4 hover:underline ${focusRing}`;
+export const linkClasses = `rounded-sm font-semibold text-brand-ink underline-offset-4 hover:underline ${focusRing}`;
 
 /** A square button that shows only an icon; the label is what a screen reader says and the tooltip shows. */
 export function IconButton({
@@ -34,7 +34,7 @@ export function IconButton({
   children,
   ...props
 }: { label: string; tone?: "default" | "danger" } & React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  const colours = tone === "danger" ? "text-slate hover:bg-red-50 hover:text-danger" : "text-slate hover:bg-slate-100 hover:text-ink";
+  const colours = tone === "danger" ? "text-slate hover:bg-red-50 hover:text-danger" : "text-slate hover:bg-surface hover:text-ink";
   return (
     <button
       aria-label={label}
@@ -54,7 +54,7 @@ const menuRow = `flex min-h-12 w-full items-center gap-2 rounded-button px-4 tex
 export function SignOut({
   label,
   pendingLabel,
-  className = `${menuRow} font-medium text-slate hover:bg-slate-100 hover:text-ink disabled:opacity-60`,
+  className = `${menuRow} font-medium text-slate hover:bg-surface hover:text-ink disabled:opacity-60`,
 }: {
   label: string;
   pendingLabel?: string;
@@ -112,8 +112,8 @@ export function PageHeader({
 }) {
   return (
     <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-      <div className="flex min-w-0 flex-col gap-2">
-        <h1 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">{title}</h1>
+      <div className="flex min-w-0 flex-col gap-1">
+        <h1 className="font-display text-[1.75rem] leading-tight font-bold tracking-tight text-ink sm:text-[2rem]">{title}</h1>
         {subtitle ? <div className="text-sm text-slate">{subtitle}</div> : null}
       </div>
       {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
@@ -121,16 +121,18 @@ export function PageHeader({
   );
 }
 
-type Variant = "primary" | "secondary" | "danger" | "dangerSolid" | "ghost";
+type Variant = "primary" | "navy" | "secondary" | "danger" | "dangerSolid" | "ghost";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-indigo text-white shadow-xs not-disabled:hover:bg-indigo-700 not-disabled:active:bg-indigo-800",
+  // saffron with navy text: white on saffron would be too faint to read
+  primary: "bg-brand text-navy shadow-xs not-disabled:hover:bg-brand-hover not-disabled:active:bg-brand-active",
+  navy: "bg-navy text-white shadow-xs not-disabled:hover:bg-navy-hover not-disabled:active:bg-navy",
   secondary:
-    "border border-line bg-white text-ink shadow-xs not-disabled:hover:border-slate-300 not-disabled:hover:bg-slate-50 not-disabled:active:bg-slate-100",
+    "border border-line bg-white text-ink shadow-xs not-disabled:hover:border-slate-300 not-disabled:hover:bg-surface not-disabled:active:bg-slate-100",
   danger:
     "border border-red-200 bg-white text-danger not-disabled:hover:border-red-300 not-disabled:hover:bg-red-50 not-disabled:active:bg-red-100",
   dangerSolid: "bg-danger text-white shadow-xs not-disabled:hover:bg-red-700 not-disabled:active:bg-red-800",
-  ghost: "text-teal not-disabled:hover:bg-teal-50 not-disabled:active:bg-teal-100",
+  ghost: "text-brand-ink not-disabled:hover:bg-brand-soft not-disabled:active:bg-brand-soft",
 };
 
 /** "lg" is for the one action a screen exists for, such as Charge: 48px everywhere, larger text. */
@@ -175,7 +177,7 @@ export function ButtonLink({
 }
 
 const control =
-  "min-h-12 w-full rounded-control border border-line bg-white px-4 py-2 text-base text-ink tabular-nums shadow-xs transition placeholder:text-slate/70 hover:border-slate-300 focus:border-indigo focus:outline-hidden focus:ring-2 focus:ring-indigo/25 disabled:cursor-not-allowed disabled:border-line disabled:bg-surface disabled:text-slate user-invalid:border-danger motion-reduce:transition-none sm:min-h-10 sm:text-sm";
+  "min-h-12 w-full rounded-control border border-line bg-white px-4 py-2 text-base text-ink tabular-nums shadow-xs transition placeholder:text-slate/70 hover:border-slate-300 focus:border-brand-ink focus:outline-hidden focus:ring-3 focus:ring-brand/25 disabled:cursor-not-allowed disabled:border-line disabled:bg-surface disabled:text-slate user-invalid:border-danger motion-reduce:transition-none sm:min-h-10 sm:text-sm";
 
 const labelText = "font-medium text-ink";
 
@@ -264,9 +266,9 @@ export function Checkbox({
 }: { label: string; hint?: string } & Omit<React.InputHTMLAttributes<HTMLInputElement>, "type">) {
   return (
     <label
-      className={`-mx-2 flex min-h-12 cursor-pointer items-center gap-2 rounded-button px-2 text-sm text-ink transition-colors hover:bg-slate-50 has-disabled:cursor-not-allowed has-disabled:opacity-60 motion-reduce:transition-none sm:min-h-10 ${className}`}
+      className={`-mx-2 flex min-h-12 cursor-pointer items-center gap-2 rounded-button px-2 text-sm text-ink transition-colors hover:bg-surface has-disabled:cursor-not-allowed has-disabled:opacity-60 motion-reduce:transition-none sm:min-h-10 ${className}`}
     >
-      <input className={`size-5 shrink-0 cursor-pointer accent-indigo ${focusRing}`} type="checkbox" {...input} />
+      <input className={`size-5 shrink-0 cursor-pointer accent-brand-ink ${focusRing}`} type="checkbox" {...input} />
       <span className="min-w-0">
         {label}
         {hint ? <span className="block text-xs text-slate">{hint}</span> : null}
@@ -277,28 +279,37 @@ export function Checkbox({
 
 export function Panel({
   title,
+  icon,
   actions,
   className = "",
   id,
   children,
 }: {
   title?: string;
+  /** A small icon in a saffron chip before the title. */
+  icon?: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
   id?: string;
   children: React.ReactNode;
 }) {
   const titleId = useId();
+  // min-w-0: in a grid, a long product name must not widen the card past the screen
   return (
     <section
       aria-labelledby={title ? titleId : undefined}
-      className={`rounded-panel border border-line bg-white p-4 shadow-xs sm:p-6 ${className}`}
+      className={`min-w-0 rounded-panel border border-line bg-white p-4 shadow-card sm:p-6 ${className}`}
       id={id}
     >
       {title || actions ? (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           {title ? (
-            <h2 className="text-base font-semibold text-ink" id={titleId}>
+            <h2 className="flex min-w-0 items-center gap-2.5 text-base font-semibold text-ink" id={titleId}>
+              {icon ? (
+                <span aria-hidden="true" className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft text-brand-ink">
+                  {icon}
+                </span>
+              ) : null}
               {title}
             </h2>
           ) : null}
@@ -318,16 +329,17 @@ export function Badge({
   children: React.ReactNode;
 }) {
   const styles = {
-    ok: "bg-emerald-50 text-emerald-800 ring-emerald-600/20",
-    warn: "bg-amber-50 text-amber-800 ring-amber-600/25",
+    ok: "bg-teal-soft text-teal ring-teal/20",
+    warn: "bg-brand-soft text-brand-ink ring-brand/35",
     bad: "bg-red-50 text-red-700 ring-red-600/20",
-    muted: "bg-slate-100 text-slate-700 ring-slate-500/20",
-    info: "bg-indigo-50 text-indigo-700 ring-indigo-600/20",
+    muted: "bg-slate-100 text-slate-700 ring-slate-500/15",
+    info: "bg-navy-soft text-navy ring-navy/15",
   }[tone];
   return (
     <span
-      className={`inline-flex min-h-6 items-center gap-1 rounded-full px-2 text-xs font-semibold whitespace-nowrap ring-1 ring-inset ${styles}`}
+      className={`inline-flex min-h-6 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold whitespace-nowrap ring-1 ring-inset ${styles}`}
     >
+      <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-current opacity-75" />
       {children}
     </span>
   );
@@ -337,13 +349,13 @@ export function Badge({
 export function Alert({ tone = "error", children }: { tone?: "error" | "success" | "info"; children: React.ReactNode }) {
   const styles = {
     error: "border-red-200 bg-red-50 text-red-800",
-    success: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    info: "border-indigo-100 bg-indigo-50 text-indigo-950",
+    success: "border-teal/20 bg-teal-soft text-teal",
+    info: "border-navy/10 bg-navy-soft text-navy",
   }[tone];
   const Icon = tone === "error" ? AlertIcon : tone === "success" ? CheckCircleIcon : InfoIcon;
   return (
     <div
-      className={`flex items-start gap-2 rounded-button border px-4 py-2 text-sm ${styles}`}
+      className={`flex items-start gap-2.5 rounded-xl border px-4 py-3 text-sm ${styles}`}
       role={tone === "error" ? "alert" : "status"}
     >
       <Icon className="mt-0.5 size-4 shrink-0" />
@@ -365,9 +377,9 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-panel border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+    <div className="flex flex-col items-center gap-2 rounded-panel border border-dashed border-line bg-white px-6 py-12 text-center">
       {icon ? (
-        <div className="mb-2 flex size-12 items-center justify-center rounded-full bg-slate-100 text-slate">{icon}</div>
+        <div className="mb-2 flex size-12 items-center justify-center rounded-2xl bg-brand-soft text-brand-ink">{icon}</div>
       ) : null}
       <p className="text-base font-semibold text-ink">{title}</p>
       {hint ? <p className="max-w-md text-sm text-slate">{hint}</p> : null}
@@ -378,7 +390,7 @@ export function EmptyState({
 
 /** A grey shape where content is about to appear. Callers give it a size and corners. */
 export function Skeleton({ className = "" }: { className?: string }) {
-  return <div aria-hidden="true" className={`animate-pulse bg-slate-200/70 motion-reduce:animate-none ${className}`} />;
+  return <div aria-hidden="true" className={`animate-pulse bg-slate-200/60 motion-reduce:animate-none ${className}`} />;
 }
 
 /** Placeholder rows for a list that is loading. */
@@ -490,7 +502,7 @@ export function Modal({
   return (
     <dialog
       aria-labelledby={titleId}
-      className={`m-0 mt-auto max-h-[92dvh] w-full max-w-none overflow-hidden rounded-t-2xl border-0 bg-white p-0 text-ink shadow-xl backdrop:bg-[rgb(15_23_42/0.45)] sm:m-auto sm:max-h-[85dvh] sm:rounded-2xl ${
+      className={`m-0 mt-auto max-h-[92dvh] w-full max-w-none overflow-hidden rounded-t-3xl border-0 bg-white p-0 text-ink shadow-pop backdrop:bg-[rgb(11_30_67/0.5)] sm:m-auto sm:max-h-[85dvh] sm:rounded-2xl ${
         wide ? "sm:max-w-2xl" : "sm:max-w-lg"
       }`}
       onClick={(event) => {
@@ -504,7 +516,7 @@ export function Modal({
       {open ? (
         <div className="flex max-h-[inherit] flex-col">
           <div className="flex shrink-0 items-center justify-between gap-4 border-b border-line py-2 pr-2 pl-4 sm:pl-6">
-            <h2 className="min-w-0 text-base font-semibold text-ink" id={titleId}>
+            <h2 className="min-w-0 font-display text-lg font-bold text-ink" id={titleId}>
               {title}
             </h2>
             <IconButton label={t("close")} onClick={onClose}>
@@ -515,6 +527,33 @@ export function Modal({
         </div>
       ) : null}
     </dialog>
+  );
+}
+
+const monogramTints = [
+  "bg-brand-soft text-brand-ink",
+  "bg-teal-soft text-teal",
+  "bg-navy-soft text-navy",
+  "bg-[#fdecef] text-[#be123c]",
+  "bg-[#e8f0fe] text-sky",
+  "bg-[#f1edfe] text-[#6d28d9]",
+];
+
+/** Two initials ("Thanaka Face Cream" → "TF"; Burmese: its first letter), for a name that has no picture. */
+function initialsOf(name: string) {
+  const words = name.split(/[\s·\-–—/,()]+/).filter((word) => /\p{L}/u.test(word));
+  const first = (word?: string) => (word ? Array.from(word)[0] : "");
+  const latin = /^[A-Za-z]/.test(words[0] ?? "");
+  return (latin ? `${first(words[0])}${first(words[1])}` : first(words[0])).toUpperCase() || "?";
+}
+
+/** A product's stand-in picture: its initials on a tint that is always the same for the same name. */
+export function Monogram({ name, className = "size-10 rounded-xl text-sm" }: { name: string; className?: string }) {
+  const tint = monogramTints[Array.from(name).reduce((sum, char) => sum + char.codePointAt(0)!, 0) % monogramTints.length];
+  return (
+    <span aria-hidden="true" className={`flex shrink-0 items-center justify-center font-display font-bold ${tint} ${className}`}>
+      {initialsOf(name)}
+    </span>
   );
 }
 

@@ -42,7 +42,7 @@ export default async function GuidePage({ params }: Params) {
         <Link className="flex items-center gap-2 rounded-button text-lg font-bold tracking-tight text-ink" href="/dashboard">
           <span
             aria-hidden="true"
-            className="flex size-8 items-center justify-center rounded-button bg-indigo text-sm font-extrabold text-white"
+            className="flex size-8 items-center justify-center rounded-button bg-brand font-display text-sm font-extrabold text-navy"
           >
             T
           </span>
@@ -52,7 +52,7 @@ export default async function GuidePage({ params }: Params) {
       </header>
 
       <div className="flex max-w-2xl flex-col gap-4 py-8 sm:py-12">
-        <p className="text-sm font-semibold tracking-wide text-indigo uppercase">{t("eyebrow")}</p>
+        <p className="text-sm font-semibold tracking-wide text-brand-ink uppercase">{t("eyebrow")}</p>
         <h1 className="text-3xl font-bold tracking-tight text-balance text-ink sm:text-5xl">{t("title")}</h1>
         <p className="text-lg text-slate">{t("lede")}</p>
         <div>
@@ -72,7 +72,7 @@ export default async function GuidePage({ params }: Params) {
       >
         {chapters.map((id) => (
           <a
-            className="shrink-0 rounded-full border border-line bg-white px-3.5 py-1.5 text-sm font-medium whitespace-nowrap text-ink hover:border-indigo"
+            className="shrink-0 rounded-full border border-line bg-white px-3.5 py-1.5 text-sm font-medium whitespace-nowrap text-ink hover:border-brand-ink"
             href={`#${id}`}
             key={id}
           >
@@ -234,7 +234,7 @@ function Step({
   return (
     <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-10">
       <div className="flex max-w-2xl flex-col gap-3">
-        {label ? <p className="font-mono text-xs font-medium tracking-widest text-indigo uppercase">{label}</p> : null}
+        {label ? <p className="font-mono text-xs font-medium tracking-widest text-brand-ink uppercase">{label}</p> : null}
         {title ? <h3 className="text-xl font-semibold tracking-tight text-ink">{title}</h3> : null}
         {children}
       </div>
@@ -267,7 +267,7 @@ function ShotStrip({ shots, swipe, closeLabel }: { shots: Shot[]; swipe: string;
 
 function List({ items }: { items: React.ReactNode[] }) {
   return (
-    <ul className="flex list-disc flex-col gap-1.5 pl-5 marker:text-indigo">
+    <ul className="flex list-disc flex-col gap-1.5 pl-5 marker:text-brand-ink">
       {items.map((item, index) => (
         <li key={index}>{item}</li>
       ))}

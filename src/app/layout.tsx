@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Noto_Sans_Myanmar } from "next/font/google";
+import { Bricolage_Grotesque, Geist, Geist_Mono, Noto_Sans_Myanmar } from "next/font/google";
 import { headers } from "next/headers";
 
 import "./globals.css";
@@ -12,6 +12,13 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-geist-mono",
+});
+
+// page titles and the big figures: optical sizes give large numbers their display cut
+const display = Bricolage_Grotesque({
+  subsets: ["latin"],
+  axes: ["opsz"],
+  variable: "--font-bricolage",
 });
 
 const myanmar = Noto_Sans_Myanmar({
@@ -43,7 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       lang={lang}
-      className={`${geistSans.variable} ${geistMono.variable} ${myanmar.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${display.variable} ${myanmar.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: reportErrors }} />
