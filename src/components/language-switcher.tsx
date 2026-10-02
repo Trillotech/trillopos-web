@@ -17,7 +17,7 @@ export function LanguageSwitcher({ fullWidth = false }: { fullWidth?: boolean })
       <span className="sr-only">{t("label")}</span>
       <GlobeIcon className="pointer-events-none absolute left-4 size-4 text-slate" />
       <select
-        className={`min-h-12 cursor-pointer appearance-none rounded-button border border-line bg-white pr-10 pl-10 font-myanmar text-sm font-medium text-ink shadow-xs transition hover:border-slate-300 focus:border-indigo focus:ring-2 focus:ring-indigo/25 focus:outline-hidden motion-reduce:transition-none md:min-h-10 ${
+        className={`min-h-12 cursor-pointer appearance-none rounded-button border border-line bg-white pr-10 pl-10 font-myanmar text-sm font-medium text-ink shadow-xs transition hover:border-slate-300 focus:border-brand-ink focus:ring-3 focus:ring-brand/25 focus:outline-hidden motion-reduce:transition-none md:min-h-10 ${
           fullWidth ? "w-full" : ""
         }`}
         value={locale}

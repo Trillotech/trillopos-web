@@ -245,7 +245,7 @@ export function CustomerDesk() {
                 {rows.map((customer) => (
                   <tr className="transition-colors hover:bg-slate-50 motion-reduce:transition-none" key={customer.id}>
                     <td className="px-4 py-4">
-                      <button className={`rounded-sm font-semibold text-ink hover:text-indigo hover:underline ${insetFocusRing}`} onClick={() => fill(customer)} type="button">
+                      <button className={`rounded-sm font-semibold text-ink hover:text-brand-ink hover:underline ${insetFocusRing}`} onClick={() => fill(customer)} type="button">
                         {customer.name}
                       </button>
                     </td>

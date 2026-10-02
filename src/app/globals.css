@@ -1,21 +1,43 @@
 @import "tailwindcss";
 
 :root {
-  --ink: #0f172a;
-  --indigo: #4f46e5;
+  /* navy: text and the dark surfaces (the menu item you are on, dark cards) */
+  --ink: #0e1b33;
+  --navy: #0b1e43;
+  --navy-hover: #132b5b;
+  --navy-soft: #e9edf6;
+  /* saffron: the brand. Text on it is navy (7.4:1); white on saffron is too faint to read */
+  --brand: #f59f00;
+  --brand-hover: #e89300;
+  --brand-active: #d98700;
+  --brand-soft: #fff4db;
+  /* saffron dark enough for text, links and focus rings on white (5:1) and on navy (3.3:1) */
+  --brand-ink: #b45309;
   /* teal and red one shade darker than the first design: at #0d9488 and #ef4444 small text on
      white was 3.7:1, under the 4.5:1 that WCAG AA asks for */
   --teal: #0f766e;
-  --surface: #f8fafc;
-  --line: #e2e8f0;
+  --teal-soft: #e6f4f2;
+  --sky: #1d4ed8;
+  --surface: #f5f6fa;
+  --line: #e6e8ef;
   --danger: #dc2626;
-  --slate: #475569;
+  /* secondary text: 5.9:1 on white, 5.5:1 on the page background */
+  --slate: #5b6478;
 }
 
 @theme inline {
   --color-ink: var(--ink);
-  --color-indigo: var(--indigo);
+  --color-navy: var(--navy);
+  --color-navy-hover: var(--navy-hover);
+  --color-navy-soft: var(--navy-soft);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-active: var(--brand-active);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-ink: var(--brand-ink);
   --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-sky: var(--sky);
   --color-surface: var(--surface);
   --color-line: var(--line);
   --color-slate: var(--slate);
@@ -24,9 +46,13 @@
   --font-sans: var(--font-geist-sans), var(--font-noto-myanmar), sans-serif;
   --font-mono: var(--font-geist-mono), var(--font-noto-myanmar), ui-monospace, monospace;
   --font-myanmar: var(--font-noto-myanmar), var(--font-geist-sans), sans-serif;
-  --radius-control: 8px;
-  --radius-button: 8px;
+  /* page titles and the big figures only; Burmese words in them fall back to the Myanmar font */
+  --font-display: var(--font-bricolage), var(--font-noto-myanmar), sans-serif;
+  --radius-control: 10px;
+  --radius-button: 10px;
   --radius-panel: 16px;
+  --shadow-card: 0 1px 2px rgb(14 27 51 / 0.04), 0 4px 12px -4px rgb(14 27 51 / 0.07);
+  --shadow-pop: 0 16px 40px -12px rgb(14 27 51 / 0.25);
 }
 
 body {
@@ -57,11 +83,11 @@ html[lang="my"] * {
 @layer base {
   /* a visible focus mark on anything a keyboard can reach; components draw their own ring */
   :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
-    outline: 2px solid var(--indigo);
+    outline: 2px solid var(--brand-ink);
     outline-offset: 2px;
   }
 
   ::selection {
-    background-color: color-mix(in oklab, var(--indigo) 20%, transparent);
+    background-color: color-mix(in oklab, var(--brand) 30%, transparent);
   }
 }

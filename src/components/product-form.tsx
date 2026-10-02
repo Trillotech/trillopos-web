@@ -395,7 +395,7 @@ export function ProductForm({ productId }: { productId?: string }) {
                       <button
                         aria-pressed={on}
                         className={`min-h-12 rounded-button border px-2 text-sm font-semibold tabular-nums transition-colors motion-reduce:transition-none ${focusRing} ${
-                          on ? "border-indigo bg-indigo text-white" : "border-line bg-white text-ink hover:border-slate-300 hover:bg-slate-50"
+                          on ? "border-navy bg-navy text-white" : "border-line bg-white text-ink hover:border-slate-300 hover:bg-slate-50"
                         }`}
                         key={label}
                         onClick={() => toggleSize(label)}

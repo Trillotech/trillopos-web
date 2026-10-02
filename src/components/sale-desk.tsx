@@ -369,7 +369,7 @@ export function SaleDesk() {
               <button
                 aria-checked={mode === value}
                 className={`min-h-10 rounded-md px-4 text-sm font-semibold transition motion-reduce:transition-none ${focusRing} ${
-                  mode === value ? "bg-indigo text-white shadow-xs" : "text-slate hover:bg-slate-100 hover:text-ink"
+                  mode === value ? "bg-navy text-white shadow-xs" : "text-slate hover:bg-slate-100 hover:text-ink"
                 }`}
                 key={value}
                 onClick={() => chooseMode(value)}
@@ -480,7 +480,7 @@ export function SaleDesk() {
                     {visible.slice(0, 20).map((product) => (
                       <li key={product.id}>
                         <button
-                          className={`flex min-h-12 w-full items-center gap-4 px-4 py-2 text-left text-sm transition-colors hover:bg-indigo/5 active:bg-indigo/10 motion-reduce:transition-none ${insetFocusRing}`}
+                          className={`flex min-h-12 w-full items-center gap-4 px-4 py-2 text-left text-sm transition-colors hover:bg-brand-soft/60 active:bg-brand-soft motion-reduce:transition-none ${insetFocusRing}`}
                           onClick={() => add(product)}
                           type="button"
                         >
@@ -491,7 +491,7 @@ export function SaleDesk() {
                             ) : null}
                           </span>
                           <span className="font-semibold text-ink tabular-nums">{formatAmount(product.retailPrice)}</span>
-                          <PlusIcon className="size-5 shrink-0 text-indigo" />
+                          <PlusIcon className="size-5 shrink-0 text-brand-ink" />
                         </button>
                       </li>
                     ))}
@@ -545,7 +545,7 @@ export function SaleDesk() {
                     {found.map((row) => (
                       <li key={row.id}>
                         <button
-                          className={`flex min-h-12 w-full items-center gap-4 px-4 py-2 text-left text-sm transition-colors hover:bg-indigo/5 motion-reduce:transition-none ${insetFocusRing}`}
+                          className={`flex min-h-12 w-full items-center gap-4 px-4 py-2 text-left text-sm transition-colors hover:bg-brand-soft/60 motion-reduce:transition-none ${insetFocusRing}`}
                           onClick={() => chooseCustomer(row)}
                           type="button"
                         >
@@ -553,7 +553,7 @@ export function SaleDesk() {
                             <span className="block truncate font-medium text-ink">{row.name}</span>
                             {row.phone ? <span className="block text-xs text-slate tabular-nums">{row.phone}</span> : null}
                           </span>
-                          <span className="font-semibold text-indigo">{t("selectCustomer")}</span>
+                          <span className="font-semibold text-brand-ink">{t("selectCustomer")}</span>
                         </button>
                       </li>
                     ))}
