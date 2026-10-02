@@ -37,6 +37,7 @@ import {
 import { Link } from "@/i18n/navigation";
 import type { Schemas } from "@/lib/backend";
 import { useCodes } from "@/lib/codes";
+import { localDate, shiftDays } from "@/lib/dates";
 import { formatAmount, formatQuantity } from "@/lib/money";
 import { messageFor, readJson } from "@/lib/read-json";
 import { useMembershipRole } from "@/lib/role";
@@ -67,18 +68,6 @@ const methodColours: Record<string, string> = {
   CREDIT: "#94a3b8",
   OTHER: "#cbd5e1",
 };
-
-/** YYYY-MM-DD in the shop's own timezone, whatever the phone's clock is set to. */
-function localDate(timezone: string, date = new Date()) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" })
-    .format(date);
-}
-
-function shiftDays(isoDate: string, days: number) {
-  const date = new Date(`${isoDate}T00:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
-}
 
 /** The period's dates, and the ones it is compared with: yesterday, or the same days of last month. */
 function rangeOf(period: Period, today: string) {
