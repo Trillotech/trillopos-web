@@ -424,6 +424,11 @@
     "product": "Product",
     "quantity": "Quantity",
     "unitCost": "Unit cost",
+    "reason": "Reason",
+    "counted": "Your count",
+    "countedFewer": "Fewer than shown",
+    "countedMore": "More than shown",
+    "difference": "Difference",
     "postNow": "Post",
     "recent": "Recent entries",
     "void": "Void",
@@ -437,11 +442,12 @@
     "typeHint": {
       "STOCK_IN": "Stock you received, from a supplier or anywhere else.",
       "STOCK_OUT": "Stock that left without a sale: damaged, used in the shop, lost.",
-      "ADJUSTMENT": "After counting, enter the difference: −3 if you counted 3 fewer than shown.",
+      "ADJUSTMENT": "After counting, choose fewer or more than shown, then enter the difference: 3 if you counted 3 fewer.",
       "TRANSFER": "Move stock from one place to another.",
       "OPENING": "Stock you already had before using TrilloPOS."
     },
     "unitCostHint": "What one unit cost you. For stock in and opening stock.",
+    "unitCostHintCount": "What one unit cost you. For the extra stock you counted.",
     "posted": "Stock entry posted.",
     "payableCreated": "A supplier debt was added under You owe.",
     "recentEmpty": "No stock entries yet",
@@ -913,6 +919,15 @@
       "TRANSFER_IN": "Transfer in",
       "TRANSFER_OUT": "Transfer out",
       "ADJUSTMENT": "Adjustment"
+    },
+    "movementReason": {
+      "DAMAGED": "Damaged",
+      "EXPIRED": "Expired",
+      "INTERNAL_USE": "Used in the shop",
+      "SAMPLE": "Sample or gift",
+      "THEFT": "Lost or stolen",
+      "COUNT_CORRECTION": "Count correction",
+      "VOID_REVERSAL": "Voided entry"
     },
     "locationType": {
       "STORE": "Shop",
