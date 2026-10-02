@@ -33,6 +33,8 @@ type Supplier = Schemas["SupplierView"];
 type Movement = Schemas["MovementView"];
 
 const types = ["STOCK_IN", "STOCK_OUT", "ADJUSTMENT", "TRANSFER", "OPENING"] as const;
+// why stock left without a sale; a count adjustment is always a count correction, a void writes its own
+const outReasons = ["DAMAGED", "EXPIRED", "INTERNAL_USE", "SAMPLE", "THEFT"] as const;
 
 const docTone = (status?: string) => (status === "POSTED" ? "ok" : status === "DRAFT" ? "warn" : "muted");
 
@@ -53,6 +55,9 @@ export function StockDesk() {
   const [productId, setProductId] = useState("");
   const [quantity, setQuantity] = useState("");
   const [unitCost, setUnitCost] = useState("");
+  const [reason, setReason] = useState<(typeof outReasons)[number] | "">("");
+  // chosen anew for every count: the wrong sign is never the default
+  const [counted, setCounted] = useState<"fewer" | "more" | "">("");
   const [ledgerProduct, setLedgerProduct] = useState("");
   const [ledgerLocation, setLedgerLocation] = useState("");
   const [movements, setMovements] = useState<Movement[]>();
@@ -65,6 +70,15 @@ export function StockDesk() {
   const [busy, setBusy] = useState<"post" | "void" | "draft" | "ledger">();
   // the latest few entries; the rest one tap away
   const [showAll, setShowAll] = useState(false);
+
+  const adjusting = type === "ADJUSTMENT";
+  // the cost of the stock coming in; everywhere else the backend uses the running average
+  const needsCost = type === "STOCK_IN" || type === "OPENING" || (adjusting && counted === "more");
+  const ready =
+    Boolean(quantity && locationId && productId) &&
+    (type !== "STOCK_OUT" || reason !== "") &&
+    (!adjusting || counted !== "") &&
+    (!needsCost || unitCost !== "");
 
   function load() {
     return readJson<Doc[]>("/api/stock/documents").then(setDocs);
@@ -107,6 +121,8 @@ export function StockDesk() {
     event.preventDefault();
     setFormError(undefined);
     setBusy("post");
+    // a count is typed without a sign (a phone's number pad has no minus key); its direction gives it
+    const difference = quantity.trim().replace(/^[-−]\s*/, "");
     try {
       const posted = await readJson<Schemas["DocumentView"]>("/api/stock/documents", {
         method: "POST",
@@ -115,12 +131,21 @@ export function StockDesk() {
           locationId,
           counterpartyLocationId: type === "TRANSFER" ? otherLocationId : undefined,
           supplierId: type === "STOCK_IN" ? supplierId || undefined : undefined,
-          lines: [{ productId, quantity, unitCost: unitCost || undefined }],
+          lines: [
+            {
+              productId,
+              quantity: adjusting ? (counted === "fewer" ? `-${difference}` : difference) : quantity,
+              unitCost: needsCost ? unitCost || undefined : undefined,
+              reason: type === "STOCK_OUT" ? reason || undefined : adjusting ? "COUNT_CORRECTION" : undefined,
+            },
+          ],
           post: true,
         }),
       });
       setPayableId(posted.payableId);
       setQuantity("");
+      setReason("");
+      setCounted("");
       setEntryOpen(false);
       setNotice(t("posted"));
       await load();
@@ -292,7 +317,10 @@ export function StockDesk() {
                 {movements.map((row) => (
                   <tr key={row.id}>
                     <td className="px-4 py-2 whitespace-nowrap sm:pl-6">{when(row.movedAt ?? row.createdAt)}</td>
-                    <td className="px-4 py-2 whitespace-nowrap">{codes("movementType", row.type)}</td>
+                    <td className="px-4 py-2 whitespace-nowrap">
+                      {codes("movementType", row.type)}
+                      {row.reason ? <span className="block text-xs text-slate">{codes("movementReason", row.reason)}</span> : null}
+                    </td>
                     <td className={`px-4 py-2 text-right font-semibold tabular-nums ${new Decimal(row.quantity ?? 0).lt(0) ? "text-danger" : "text-teal"}`}>
                       {signed(row.quantity)}
                     </td>
@@ -344,11 +372,35 @@ export function StockDesk() {
                 <option key={row.id} value={row.id}>{row.name}</option>
               ))}
             </SelectField>
-            <Field inputMode="decimal" label={t("quantity")} onChange={(event) => setQuantity(event.target.value)} required value={quantity} />
-            <Field hint={t("unitCostHint")} inputMode="decimal" label={t("unitCost")} onChange={(event) => setUnitCost(event.target.value)} value={unitCost} />
+            {type === "STOCK_OUT" ? (
+              <SelectField label={t("reason")} onChange={(event) => setReason(event.target.value as typeof reason)} required value={reason}>
+                <option value="">{t("choose")}</option>
+                {outReasons.map((value) => (
+                  <option key={value} value={value}>{codes("movementReason", value)}</option>
+                ))}
+              </SelectField>
+            ) : null}
+            {adjusting ? (
+              <SelectField label={t("counted")} onChange={(event) => setCounted(event.target.value as typeof counted)} required value={counted}>
+                <option value="">{t("choose")}</option>
+                <option value="fewer">{t("countedFewer")}</option>
+                <option value="more">{t("countedMore")}</option>
+              </SelectField>
+            ) : null}
+            <Field inputMode="decimal" label={adjusting ? t("difference") : t("quantity")} onChange={(event) => setQuantity(event.target.value)} required value={quantity} />
+            {needsCost ? (
+              <Field
+                hint={adjusting ? t("unitCostHintCount") : t("unitCostHint")}
+                inputMode="decimal"
+                label={t("unitCost")}
+                onChange={(event) => setUnitCost(event.target.value)}
+                required
+                value={unitCost}
+              />
+            ) : null}
           </div>
           {formError ? <Alert>{formError}</Alert> : null}
-          <Button busy={busy === "post"} className="self-start" disabled={!quantity || !locationId || !productId} type="submit">
+          <Button busy={busy === "post"} className="self-start" disabled={!ready} type="submit">
             {t("postNow")}
           </Button>
         </form>

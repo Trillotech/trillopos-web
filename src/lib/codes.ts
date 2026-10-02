@@ -17,6 +17,7 @@ type CodeGroup =
   | "docType"
   | "docStatus"
   | "movementType"
+  | "movementReason"
   | "locationType"
   | "registerStatus"
   | "customerType"
