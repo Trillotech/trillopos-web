@@ -107,11 +107,19 @@ test("sales log filters progress and payment together and shows both badges on a
   await page.goto("/en/sales");
   await page.getByRole("combobox",{name:"Progress",exact:true}).selectOption("OPEN");
   await page.getByRole("combobox",{name:"Payment",exact:true}).selectOption("UNPAID");
-  const row=page.getByRole("link").filter({hasText:sale.receiptNumber});
+  const row=page.getByRole("row").filter({hasText:sale.receiptNumber});
   await expect(row).toBeVisible();await expect(row).toContainText("Open");await expect(row).toContainText("Unpaid");
+  await expect(row).toContainText("Online");
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
   await row.scrollIntoViewIfNeeded();
   await page.screenshot({path:testInfo.outputPath("filtered-sales-log.png")});
+  // the order type and the search narrow the list without another trip to the server
+  await page.getByRole("combobox",{name:"Type",exact:true}).selectOption("OFFLINE");
+  await expect(row).toHaveCount(0);
+  await page.getByRole("combobox",{name:"Type",exact:true}).selectOption("ONLINE");
+  await expect(row).toBeVisible();
+  await page.getByLabel("Search receipt or customer").fill(sale.receiptNumber);
+  await expect(page.getByRole("row")).toHaveCount(2);
   await page.getByRole("combobox",{name:"Progress",exact:true}).selectOption("CLOSED");
   await expect(row).toHaveCount(0);
 });
