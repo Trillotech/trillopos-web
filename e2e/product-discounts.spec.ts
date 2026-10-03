@@ -1,4 +1,4 @@
-import { addProduct, expect, send, test } from "./fixtures";
+import { addProduct, expect, openCart, send, test } from "./fixtures";
 import type { Page } from "@playwright/test";
 
 async function basket(page: Page, name: string) {
@@ -6,6 +6,7 @@ async function basket(page: Page, name: string) {
   await expect(page.getByText(/Paid by KBZPay/)).toBeVisible();
   await page.getByLabel("Search products").fill(name);
   await page.locator("#main ul button", { hasText: name }).click();
+  await openCart(page);
   await page.getByLabel("Qty", { exact: true }).fill("2");
   await expect(page.getByLabel("Line discount", { exact: true })).toHaveCount(0);
 }

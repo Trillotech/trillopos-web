@@ -1,4 +1,4 @@
-import { addProduct, expect, openFromMenu, test, testPhone } from "./fixtures";
+import { addBuyer, addProduct, expect, openCart, openFromMenu, test, testPhone } from "./fixtures";
 import type { Page } from "@playwright/test";
 
 async function stockAtMain(page: Page, productId: string) {
@@ -6,7 +6,7 @@ async function stockAtMain(page: Page, productId: string) {
   return page.getByRole("listitem").filter({ hasText: "Main" });
 }
 
-/** New sale in online-order mode: find the product and tap it `times` times. */
+/** New sale in online-order mode: find the product, tap it `times` times, then open the cart. */
 async function addToCart(page: Page, name: string, times = 1) {
   await page.goto("/en/sales/new");
   await expect(page.getByText(/Paid by KBZPay/)).toBeVisible();
@@ -15,12 +15,18 @@ async function addToCart(page: Page, name: string, times = 1) {
   for (let i = 0; i < times; i++) {
     await product.click();
   }
+  await openCart(page);
+}
+
+async function payBy(page: Page, method: string) {
+  await page.getByRole("radiogroup", { name: "Method", exact: true }).getByRole("radio", { name: method, exact: true }).click();
 }
 
 test("an online order paid by KBZPay: receipt, and the stock goes down", async ({ page, api }) => {
   const product = await addProduct(api, `E2E Thanaka ${Date.now()}`, 3500, 2200, 20);
   await addToCart(page, product.name, 2);
-  await page.getByLabel("Method").selectOption("KBZ_PAY");
+  await expect(page.getByLabel("Qty", { exact: true })).toHaveValue("2");
+  await payBy(page, "KBZPay");
   await page.getByLabel("Reference").fill("KBZ E2E 0001");
   await page.getByRole("button", { name: "Charge", exact: true }).click();
   await expect(page).toHaveURL(/\/en\/sales\/[0-9a-f-]{36}$/);
@@ -32,11 +38,9 @@ test("cash on delivery: sold on credit to a new buyer, then the courier pays", a
   const product = await addProduct(api, `E2E Longyi ${Date.now()}`, 18000, 12500, 10);
   const buyer = `E2E Buyer ${Date.now()}`;
   await addToCart(page, product.name);
-  await page.getByLabel("Name", { exact: true }).fill(buyer);
-  await page.getByLabel("Phone (optional)").fill(testPhone());
-  await page.getByRole("button", { name: "Add and select" }).click();
+  await addBuyer(page, buyer, testPhone());
   await expect(page.getByText(buyer).first()).toBeVisible();
-  await page.getByRole("combobox", { name: "Payment status", exact: true }).selectOption("UNPAID");
+  await page.getByRole("radio", { name: "Unpaid", exact: true }).click();
   await page.getByRole("button", { name: "Charge", exact: true }).click();
   await expect(page).toHaveURL(/\/en\/sales\/[0-9a-f-]{36}$/);
 
@@ -54,7 +58,7 @@ test("cash on delivery: sold on credit to a new buyer, then the courier pays", a
 test("a parcel comes back: the return puts the stock back on the shelf", async ({ page, api }) => {
   const product = await addProduct(api, `E2E Scarf ${Date.now()}`, 22000, 15000, 10);
   await addToCart(page, product.name);
-  await page.getByLabel("Method").selectOption("KBZ_PAY");
+  await payBy(page, "KBZPay");
   await page.getByLabel("Reference").fill("KBZ E2E 0002");
   await page.getByRole("button", { name: "Charge", exact: true }).click();
   await expect(page).toHaveURL(/\/en\/sales\/[0-9a-f-]{36}$/);

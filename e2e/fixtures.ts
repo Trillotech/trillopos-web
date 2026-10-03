@@ -152,3 +152,33 @@ export async function openFromMenu(page: Page, group: string | null, item: strin
   }
   await menu.getByRole("link", { name: item, exact: true }).click();
 }
+
+/** Below a laptop the sale screen shows the products first; the cart opens from the bar that floats over them. */
+export async function openCart(page: Page) {
+  if ((page.viewportSize()?.width ?? 1280) < 1024) {
+    await page.getByRole("button", { name: /^View cart/ }).click();
+  }
+  await expect(page.getByRole("region", { name: "Cart", exact: true })).toBeVisible();
+}
+
+/** On the sale screen's cart: opens the customer picker, adds a new buyer and leaves them chosen. */
+export async function addBuyer(page: Page, name: string, phone?: string) {
+  await page.getByRole("button", { name: /Choose customer/ }).click();
+  const dialog = page.getByRole("dialog", { name: "Customer", exact: true });
+  await dialog.getByLabel("Name", { exact: true }).fill(name);
+  if (phone) {
+    await dialog.getByLabel("Phone (optional)").fill(phone);
+  }
+  await dialog.getByRole("button", { name: "Add and select" }).click();
+  await expect(dialog).toHaveCount(0);
+}
+
+/** The till at Main is shared by every test in a run: close it so a test that needs it closed is not misled. */
+export async function closeOpenShift(api: APIRequestContext, locationId: string) {
+  const response = await api.get(`/api/sales/shifts?locationId=${locationId}`);
+  expect(response.ok(), await response.text()).toBeTruthy();
+  const shift = (await response.json()) as { id?: string; status?: string } | null;
+  if (shift?.status === "OPEN") {
+    await send(api, "POST", `/api/sales/shifts/${shift.id}/close`, { countedCash: "0" });
+  }
+}

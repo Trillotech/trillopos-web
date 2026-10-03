@@ -1,4 +1,4 @@
-import { addProduct, BASE_URL, expect, mainLocationId, send, signIn, test, testPhone } from "./fixtures";
+import { addProduct, BASE_URL, expect, mainLocationId, openCart, send, signIn, test, testPhone } from "./fixtures";
 import type { Page } from "@playwright/test";
 
 async function leave(page: Page, label = "Sign out") {
@@ -30,7 +30,8 @@ test("owner invites a cashier; staff joins, sells, renews and signs in again wit
   await expect(page).toHaveURL(/\/en\/sales\/new$/);
   await page.getByLabel("Search products").fill(product.name);
   await page.locator("#main ul button", { hasText: product.name }).click();
-  await page.getByLabel("Method").selectOption("KBZ_PAY");
+  await openCart(page);
+  await page.getByRole("radio", { name: "KBZPay", exact: true }).click();
   await page.getByRole("button", { name: "Charge", exact: true }).click();
   await expect(page).toHaveURL(/\/en\/sales\/[0-9a-f-]{36}$/);
   expect((await page.request.get("/api/org/memberships")).status()).toBe(403);
@@ -150,6 +151,7 @@ test("a bound register signs in by name and PIN, renews, locks, switches staff a
   await expect(page.getByRole("button", { name: "Open shift", exact: true })).toHaveCount(0);
   await page.getByLabel("Search products").fill(product.name);
   await page.locator("#main ul button", { hasText: product.name }).click();
+  await openCart(page);
   await page.getByRole("button", { name: "Charge", exact: true }).click();
   await expect(page).toHaveURL(/\/en\/sales\/[0-9a-f-]{36}$/);
   await page.context().addCookies([{ name: "trillopos_access", value: "expired", url: BASE_URL }]);

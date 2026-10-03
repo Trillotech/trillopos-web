@@ -1,4 +1,4 @@
-import { addProduct, expect, mainLocationId, send, test } from "./fixtures";
+import { addBuyer, addProduct, closeOpenShift, expect, mainLocationId, openCart, send, test } from "./fixtures";
 import type { Page } from "@playwright/test";
 
 async function basket(page: Page, name: string, plan: "DEPOSIT"|"UNPAID"="DEPOSIT") {
@@ -6,10 +6,10 @@ async function basket(page: Page, name: string, plan: "DEPOSIT"|"UNPAID"="DEPOSI
   await expect(page.getByText(/Paid by KBZPay/)).toBeVisible();
   await page.getByLabel("Search products").fill(name);
   await page.locator("#main ul button",{hasText:name}).click();
-  await page.getByLabel("Name",{exact:true}).fill(`Status buyer ${Date.now()}`);
-  await page.getByRole("button",{name:"Add and select"}).click();
+  await openCart(page);
+  await addBuyer(page,`Status buyer ${Date.now()}`);
   await expect(page.getByRole("button",{name:"Walk-in",exact:true})).toBeVisible();
-  await page.getByRole("combobox",{name:"Payment status",exact:true}).selectOption(plan);
+  await page.getByRole("radiogroup",{name:"Payment status",exact:true}).getByRole("radio",{name:plan==="DEPOSIT"?"Deposit":"Unpaid",exact:true}).click();
   if(plan==="DEPOSIT") await page.getByLabel("Deposit amount",{exact:true}).fill("5000");
   await expect(page.getByTestId("sale-preview")).toContainText("20,000");
 }
@@ -57,6 +57,18 @@ test("online deposit, close/reopen and final payment update independent states a
   expect(Number(view.paymentState.outstandingAmount)).toBe(0);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
   await page.screenshot({path:testInfo.outputPath("paid-receipt.png")});
+});
+
+test("cash collected on delivery is recorded when no shift is open at the store",async({page,api})=>{
+  // an online shop may never open a till: the cash is recorded without a drawer
+  await closeOpenShift(api,await mainLocationId(api));
+  const product=await addProduct(api,`Status cash ${Date.now()}`,20000,8000,20);
+  await basket(page,product.name,"UNPAID");await charge(page);
+  await expect(page.getByTestId("sale-states")).toHaveText(/OpenUnpaid/);
+  await page.getByRole("button",{name:"Record payment",exact:true}).click();
+  await page.getByRole("combobox",{name:"Payment method",exact:true}).selectOption("CASH");
+  await page.getByRole("button",{name:"Save change",exact:true}).click();
+  await expect(page.getByTestId("sale-states")).toHaveText(/OpenPaid/);
 });
 
 test("canceling a deposit refunds the deposit, clears debt and optionally restores stock",async({page,api},testInfo)=>{
@@ -132,7 +144,7 @@ test("invalid deposits and credit without a customer are stopped before checkout
   await expect(page.getByRole("region",{name:"Cart",exact:true}).getByRole("alert")).toContainText("Enter a deposit");
   await expect(page).toHaveURL(/\/sales\/new$/);
   await page.getByRole("button",{name:"Walk-in",exact:true}).click();
-  await page.getByRole("combobox",{name:"Payment status",exact:true}).selectOption("UNPAID");
+  await page.getByRole("radio",{name:"Unpaid",exact:true}).click();
   await page.getByRole("button",{name:"Charge",exact:true}).click();
   await expect(page.getByRole("region",{name:"Cart",exact:true}).getByRole("alert")).toContainText(/customer/i);
   await expect(page).toHaveURL(/\/sales\/new$/);
