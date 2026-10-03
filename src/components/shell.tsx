@@ -145,7 +145,7 @@ export function Shell({
   }, []);
 
   return (
-    <SessionContext.Provider value={session}><div className="min-h-dvh bg-surface text-ink md:flex">
+    <SessionContext.Provider value={session}><div className="min-h-dvh bg-surface text-ink md:flex print:bg-white">
       <a
         className={`sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-button focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:shadow-lg ${focusRing}`}
         href="#main"
@@ -154,7 +154,7 @@ export function Shell({
       </a>
 
       {/* phones: a slim bar on top, the tab bar at the bottom */}
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-line bg-white/95 px-4 backdrop-blur md:hidden">
+      <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-line bg-white/95 px-4 backdrop-blur md:hidden print:hidden!">
         <Brand organizationName={organizationName} />
         <LanguageToggle />
       </header>
@@ -191,7 +191,7 @@ export function Shell({
       </dialog>
 
       {/* desktop: the sidebar */}
-      <aside className="hidden md:sticky md:top-0 md:flex md:h-dvh md:w-64 md:shrink-0 md:flex-col md:border-r md:border-line md:bg-white">
+      <aside className="hidden md:sticky md:top-0 md:flex md:h-dvh md:w-64 md:shrink-0 md:flex-col md:border-r md:border-line md:bg-white print:hidden!">
         <div className="flex h-16 shrink-0 items-center px-4">
           <Brand organizationName={organizationName} />
         </div>
@@ -209,7 +209,7 @@ export function Shell({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar />
-        <main className="min-w-0 flex-1 pb-20 focus:outline-hidden md:pb-0" id="main" tabIndex={-1}>
+        <main className="min-w-0 flex-1 pb-20 focus:outline-hidden md:pb-0 print:p-0!" id="main" tabIndex={-1}>
           <RoleContent session={session}>{children}</RoleContent>
         </main>
       </div>
@@ -247,7 +247,7 @@ function Brand({ organizationName }: { organizationName: string }) {
 function TopBar() {
   const guide = useTranslations("guide");
   return (
-    <div className="sticky top-0 z-20 hidden h-16 shrink-0 items-center gap-4 border-b border-line bg-white/85 px-8 backdrop-blur md:flex">
+    <div className="sticky top-0 z-20 hidden h-16 shrink-0 items-center gap-4 border-b border-line bg-white/85 px-8 backdrop-blur md:flex print:hidden!">
       <Today />
       <div className="ml-auto flex items-center gap-2">
         <LanguageToggle />
@@ -495,7 +495,7 @@ function TabBar({ session, active, menuOpen, onMore }: { session: CurrentSession
   return (
     <nav
       aria-label={t("tabs")}
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgb(11_30_67/0.35)] backdrop-blur md:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-8px_24px_-16px_rgb(11_30_67/0.35)] backdrop-blur md:hidden print:hidden!"
     >
       <ul className="grid h-16" style={{ gridTemplateColumns: `repeat(${visibleTabs.length + 1}, minmax(0, 1fr))` }}>
         {visibleTabs.map((tab) => {

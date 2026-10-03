@@ -47,8 +47,9 @@ export function SaleWorkflow({ sale, onSaved }: { sale: Schemas["SaleView"]; onS
     try {
       let cashierShiftId: string|undefined;
       if ((action==="payments" || action==="cancel") && method==="CASH") {
-        const shift=await readJson<Schemas["ShiftView"]>(`/api/sales/shifts?locationId=${sale.locationId}`);
-        cashierShiftId=shift.status==="OPEN"?shift.id:undefined;
+        // no open shift: the cash is recorded without a drawer, as the hint under the method says
+        const shift=await readJson<Schemas["ShiftView"]|null>(`/api/sales/shifts?locationId=${sale.locationId}`);
+        cashierShiftId=shift?.status==="OPEN"?shift.id:undefined;
       }
       const body=action==="progress"?{progress:sale.progress==="OPEN"?"CLOSED":"OPEN",reason}
         : action==="payments"?{amount,method,locationId:sale.locationId,cashierShiftId,referenceNo:reference||undefined,idempotencyKey:key}

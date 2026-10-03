@@ -91,3 +91,33 @@ html[lang="my"] * {
     background-color: color-mix(in oklab, var(--brand) 30%, transparent);
   }
 }
+
+/* A receipt's torn foot: the last 10px of the paper cut into teeth. */
+.receipt-edge {
+  --tooth: 10px;
+  mask:
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--tooth)) no-repeat,
+    conic-gradient(from -45deg at bottom, #000 90deg, #0000 0) bottom / calc(2 * var(--tooth)) var(--tooth) repeat-x;
+}
+
+/* Printing a receipt: only the slip, black on white, at the printer's own paper width. */
+@media print {
+  @page {
+    margin: 4mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .receipt-edge {
+    mask: none;
+  }
+
+  /* thermal heads dither grey into noise: every mark on the slip prints solid black */
+  .receipt-paper,
+  .receipt-paper * {
+    color: #000 !important;
+  }
+}

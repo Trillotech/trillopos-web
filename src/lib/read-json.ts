@@ -35,7 +35,13 @@ export async function readJson<T>(path: string, init?: RequestInit): Promise<T> 
   return (await readResponse<T>(path, init)).data;
 }
 
-/** Mapped copy when the code is known; otherwise the backend's detail. */
+const internalIds = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+/**
+ * Mapped copy when the code is known, with the backend's detail when it says something a person can
+ * use ("3 on hand"); a detail that names records by their internal ids is left out. Otherwise the
+ * backend's detail.
+ */
 export function messageFor(
   caught: unknown,
   translate: (key: string) => string,
@@ -43,7 +49,7 @@ export function messageFor(
 ) {
   if (caught instanceof ApiError) {
     const mapped = has(caught.code) ? translate(caught.code) : undefined;
-    if (mapped && caught.detail) {
+    if (mapped && caught.detail && !internalIds.test(caught.detail)) {
       return `${mapped} (${caught.detail})`;
     }
     return mapped || caught.detail || translate("unknown");
